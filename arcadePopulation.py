@@ -5,7 +5,7 @@ class arcadePopulation:
 	commonFields = [('index', 'uint32'), ('rx', 'float32'), ('ry', 'float32'), ('A', 'b1'), ('G', 'int8'), ('I', 'b1')]
 
 	dpi = 5
-	mortality = 145
+	mortality = 35
 	def __init__(self, size_x, size_y, parametersDict):
 
 		beta = list()
@@ -161,21 +161,31 @@ class arcadePopulation:
 
 		controlInfective = np.sum(self.__y, axis=1)
 		self.__d += self.__x >= 1.0
-		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 2)).T
+		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 1)).T
 		self.__y =  (self.__P['A'] * self.__y.T).T
 
-	def updateExposition(self, deltaX):
+	def updateExposition(self, I, S):
 		"""
 		arcadeSpots3 - arcadePopulation - updateExposition()
-		:param deltaX: numpy array
+		:param I: numpy array
+		:param S: numpy array
 		:return:
 
 		Once provided a vector that specifies the contacts between infective hosts and
 		other hosts, it updates the exposition value by multiplying the contact by
 		the rate of transmission of each pathotype.
 		"""
-		self.__x += (self.__P['A'] * (self.__beta * deltaX).T).T
+
+		self.__x += (self.__P['A'] *
+					 (self.__beta * I).T).T.reshape((self.__sx*self.__sy, len(self.__patho)))
+
+		# sSIP : secondary Stochastic Infection Probability
+		# sSIE : secondary Stochastic Infection Event
+		sSIP = (self.__P['A']*S.T).T
+		sSIE = sSIP > np.random.rand(sSIP.shape[0], sSIP.shape[1])
+		self.__x[sSIE == True]  += 1.0
 		self.__x[self.__x > 1.0] = 1.0
+
 
 	def updateAlive(self):
 		"""
@@ -217,11 +227,12 @@ class arcadePopulation:
 
 		Resets all the values but the primary inoculum
 		"""
-
+		self.__w[:,:] += 1000*((self.__P['A'] == True)*(self.__y == True).T).T
 		self.__x[:,:] = 0.0
 		self.__y[:,:] = False
 		self.__d[:,:] = 0
 		self.__P['A'][:] = True
+
 	def plotPopulation(self, patho, time=None, show=True):
 		import matplotlib.pyplot as plt
 		import seaborn as sns
