@@ -33,3 +33,12 @@ class displayer:
 			else:
 				print("\nEND")
 
+class writer :
+
+	def __init__(self, folder_name):
+		self.__folder_name = folder_name
+	def getFolderName(self):
+		return self.__folder_name
+	def write(self):
+		import os
+		os.makedirs(self.__folder_name)
