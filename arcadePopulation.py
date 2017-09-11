@@ -1,37 +1,62 @@
 # arcadePopulation
 import numpy as np
-import cProfile
+import matplotlib.pyplot as plt
+import seaborn as sns
+import scipy.stats as stats
 def logistic(t, k, a):
 	return np.exp(k*t - a)/(1+np.exp(k*t - a))
 
 class arcadePopulation:
 	commonFields = [('index', 'uint32'), ('rx', 'float32'), ('ry', 'float32'), ('A', 'b1'), ('G', 'int8', 2), ('I', 'b1')]
 
-	dpi = 5
-	mortality = 35
-	genotypes = np.array([[1,1],[0,1],[0,0]])
+	dpi = 12
 	def __init__(self, size_x, size_y, parametersDict):
 
 		beta = list()
 		primaryInoc = list()
 		alpha = list()
-		pathotypesList = sorted(parametersDict['pathotypes'])
+		k = list()
+		s = list()
+		global_parameters   = parametersDict['global_parameters']
+		specific_parameters = parametersDict['specific_parameters']
+		interspecific_parameters = parametersDict['interspecific_parameters']
+		verbose = parametersDict['metaparameters']['verbose']
+		self.__gP = np.array(interspecific_parameters['genotype_probability'])
+		pathotypesList = sorted(global_parameters['pathotypes'])
 		self.__patho = pathotypesList
 		self.__loc   = dict()
 		i = 0
 		for item in pathotypesList:
-			beta.append(parametersDict['beta'][item])
-			primaryInoc.append(parametersDict['P'][item])
-			alpha.append(parametersDict['alpha'][item])
+			beta.append(specific_parameters['beta'][item])
+			primaryInoc.append(specific_parameters['P'][item])
+			alpha.append(specific_parameters['alpha'][item])
+			k.append(specific_parameters['k'][item])
+			s.append(specific_parameters['s'][item])
 			self.__loc[item] = i
 			i += 1
 		self.__beta = np.array(beta)
 		self.__pI   = np.array(primaryInoc)
 		self.__alpha = np.array(alpha)
-		self.__C    = parametersDict['C']
-		print("arcadePopulation instance defined")
-		print("setting a population of %d hosts" %(int(size_x*size_y)))
+		self.__k = np.array(k)
+		self.__s = np.array(s)
+		C = np.zeros((len(pathotypesList), len(pathotypesList)))
+		for patho1_index in range(len(pathotypesList)) :
+			for patho2_index in range(len(pathotypesList)) :
+				patho1 = pathotypesList[patho1_index]
+				patho2 = pathotypesList[patho2_index]
+				C[patho1_index, patho2_index] = interspecific_parameters['C'][patho1][patho2]
 
+		self.__C    = C
+		genotypes = np.zeros((len(pathotypesList) + 1, len(pathotypesList)))
+		for i in range(len(pathotypesList)):
+			genotypes[i,i:] = 1
+		self.genotypes = genotypes
+		if verbose :
+			print("arcadePopulation instance defined")
+			print("setting a population of %d hosts" %(int(size_x*size_y)))
+
+		size_x = global_parameters['size_x']
+		size_y = global_parameters['size_y']
 		self.__sx = size_x
 		self.__sy = size_y
 		size = size_x * size_y
@@ -43,12 +68,18 @@ class arcadePopulation:
 		self.__P['ry'] = yy_coords
 		self.__P['A'][:] = True
 
-		print("common attributes set")
-
+		if verbose : print("common attributes set")
+		mortalityFunctions = dict(
+			linear_model   = self.__linearMortalityModel,
+			gaussian_model = self.__gaussianMortalityModel,
+			lognormal_model = self.__logNormalMortalityModel
+		)
 		self.__x = np.zeros((size, len(pathotypesList)))
 		self.__y = np.zeros((size, len(pathotypesList)))
 		self.__d = np.zeros((size, len(pathotypesList)))
 		self.__w = np.zeros((size, len(pathotypesList)))
+		self.__mortality = mortalityFunctions[parametersDict['metaparameters']['mortality']]()
+		self.__mortality = self.__mortality.astype(int)
 
 		print("population set")
 
@@ -59,7 +90,7 @@ class arcadePopulation:
 
 	def randomGenotyping(self, populationList):
 		S = self.__sx*self.__sy
-		randomGenotypes = np.random.choice((0,1,2), size=S, p=(0.8, 0.1, 0.1))
+		randomGenotypes = np.random.choice((0,1,2), size=S, p=self.__gP)
 		populationList['G'] = self.genotypes[randomGenotypes,:]
 
 
@@ -179,7 +210,7 @@ class arcadePopulation:
 
 		controlInfective = np.sum(self.__y, axis=1)
 		self.__d += self.__x >= 1.0
-		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 1)).T * self.__P['G']
+		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 2)).T * self.__P['G']
 		self.__y =  (self.__P['A'] * self.__y.T).T
 
 	def updateExposition(self, I):
@@ -193,9 +224,10 @@ class arcadePopulation:
 		the rate of transmission of each pathotype.
 		"""
 
-		self.__x += (self.__P['A'] *
-					 (self.__beta * I).T).T.reshape((self.__sx*self.__sy, len(self.__patho)))
+		#self.__x += (self.__P['A'] *
+		#			 (self.__beta * I).T).T.reshape((self.__sx*self.__sy, len(self.__patho)))
 
+		self.__x += self.__P['A'].reshape((self.__P['A'].size,1)) * I
 		# sSIP : secondary Stochastic Infection Probability
 		# sSIE : secondary Stochastic Infection Event
 		#sSIP = (self.__P['A']*S.T).T
@@ -255,8 +287,8 @@ class arcadePopulation:
 		Updates the primary inoculum, which gets increased when hosts die, and it modifies
 		the values of the alive state
 		"""
-		self.__w += (self.__d == self.mortality)*(self.__y == True)*self.__pI
-		self.__P['A'][np.sum(self.__d >= self.mortality, axis=1) >= 1.0] = False
+		self.__w += (self.__d == self.__mortality)*(self.__y == True)*self.__pI
+		self.__P['A'][np.sum(self.__d >= self.__mortality, axis=1) >= 1.0] = False
 
 	def updateInoculum(self):
 		"""
@@ -275,7 +307,8 @@ class arcadePopulation:
 		Updates the exposition depending on the linear relationship between
 		the concentration of primary inoculum in the soil.
 		"""
-		randomValues = (np.random.rand(self.__sx*self.__sy, len(self.__patho)) < (self.__w/10000))
+		base_prob = 5.4e-4
+		randomValues = (np.random.rand(self.__sx*self.__sy, len(self.__patho)) < (self.__w/1000000)*base_prob)
 		primaryInfections = (self.__P['A'] * randomValues.T).T
 		self.__x         += primaryInfections
 		self.__x[self.__x > 1.0] = 1.0
@@ -294,8 +327,6 @@ class arcadePopulation:
 		self.__P['A'][:] = True
 
 	def plotPopulation(self, patho, time=None, show=True):
-		import matplotlib.pyplot as plt
-		import seaborn as sns
 		try:
 			pathoLoc = self.__loc[patho]
 		except KeyError:
@@ -322,9 +353,67 @@ class arcadePopulation:
 		else:
 			plt.savefig("patho_{0}_day_{1}.png".format(patho, time), dpi=300)
 			plt.close()
+	def spatialMap(self, patho, time, crop, show=False):
+		try :
+			pathoLoc = self.__loc[patho]
+		except KeyError:
+			raise KeyError("There is no such a {0} pathotype".format(patho))
+		sns.set_style('darkgrid')
+		axis = [
+			self.__P['rx'].min() - 1,
+			self.__P['rx'].max() + 1,
+			self.__P['ry'].min() - 1,
+			self.__P['ry'].max() + 1
+
+		]
+		##------------------------------------------------------------#
+		## exposition
+		##------------------------------------------------------------#
+		plt.subplot(221)
+		plt.title('exposition')
+		ax=plt.scatter(self.__P['rx'], self.__P['ry'], c=self.__x[:,pathoLoc],
+					cmap='viridis')
+		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
+		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
+		plt.colorbar(ax)
+		##------------------------------------------------------------#
+		## exposition
+		##------------------------------------------------------------#
+		plt.subplot(222)
+		plt.title('infective')
+		ax =plt.hexbin(self.__P['rx'][self.__y[:,pathoLoc] == True],
+						self.__P['ry'][self.__y[:, pathoLoc] == True],
+						cmap='viridis', extent=axis, gridsize=20)
+		plt.colorbar(ax)
+		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
+		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
+		##------------------------------------------------------------#
+		## alive
+		##------------------------------------------------------------#
+		plt.subplot(223)
+		plt.title('alive')
+		ax = plt.hexbin(self.__P['rx'][self.__P['A'] == False],
+						 self.__P['ry'][self.__P['A']== False],
+						 cmap='viridis', extent=axis, gridsize=20)
+		plt.colorbar(ax)
+		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
+		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
+		##------------------------------------------------------------#
+		## primary inoc
+		##------------------------------------------------------------#
+		plt.subplot(224)
+		plt.title('primary inoculum')
+		ax = plt.scatter(self.__P['rx'],self.__P['ry'], c=self.__w[:,pathoLoc],
+					cmap='viridis')
+		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
+		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
+		plt.colorbar(ax)
+		plt.savefig('space_map_patho_%s_crop_%d_time_%d.png' % (patho, crop, time), dpi=300)
+		if show:
+			plt.show()
+		else:
+			plt.close()
 	def plotInfectiveAreas(self, patho1, patho2):
-		import matplotlib.pyplot as plt
-		import seaborn as sns
 		sns.set_style('white')
 		infectiveAreas = np.zeros((self.__sx, self.__sy,3))
 		patho1_loc = self.__loc[patho1]
@@ -360,5 +449,22 @@ class arcadePopulation:
 		j = k - i*self.__sx
 		return i,j
 
+	def __linearMortalityModel(self):
+		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+		tau = np.log(x) / (-self.__k)
+		tau = np.round(tau, 0)
+		tau += self.__s
+		tau += self.dpi
+		return tau
+
+	def __gaussianMortalityModel(self):
+
+		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+		u = stats.norm.ppf(x)
+		return u*self.__k + self.__s+ self.dpi
 
 
+	def __logNormalMortalityModel(self):
+		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+		u = stats.norm.ppf(x)
+		return np.exp(u*self.__k + self.__s) + self.dpi
