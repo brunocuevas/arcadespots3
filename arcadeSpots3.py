@@ -2,7 +2,7 @@
 
 import json
 import arcadeSimulator as aS
-
+import sys
 
 
 def parseArgumentsFile(fileName):
@@ -16,11 +16,26 @@ def parseArgumentsFile(fileName):
 		raise IOError("parameters were not correctly specified. global, specific and interspecific")
 	return json_structure
 
-params = parseArgumentsFile('params.txt')
-#for sim in range(params['metaparameters']['simulations']) :
-sim = 1
-aaa = aS.arcadeSimulator(params, sim=sim)
-aaa.simulate()
-#aaa.plotStatistics()
-aaa.printHeader('trials_1')
-aaa.saveReport('trials_1', header=True)
+def printReport(parameters):
+	print("_" * 25)
+	print("\tarcadeSpots3, by Bruno Cuevas")
+	print("_" * 25)
+	print("\tOutfile = {0}".format(parameters['metaparameters']['outfile']))
+	print("\tNumber of simulations = {0}".format(parameters['metaparameters']['simulations']))
+	print("\tNumber of pathotypes in the simulation = {0}".format(len(parameters['global_parameters']['pathotypes'])))
+	print("\tMortality model = {0}".format(parameters['metaparameters']['mortality']))
+	print("\tPlacement model = {0}".format(parameters['metaparameters']['placement']))
+	print("\tCrops = {0}".format(parameters['global_parameters']['crops']))
+try :
+	parameters_file = sys.argv[1]
+except IndexError:
+	print("missing parameters file")
+	quit()
+params = parseArgumentsFile('params.json')
+if params['metaparameters']['verbose'] :
+	printReport(params)
+for i in range(params['metaparameters']['simulations']):
+	aaa = aS.arcadeSimulator(params, sim=i)
+	aaa.simulate()
+	aaa.printHeader()
+	aaa.saveReport(header=True)

@@ -1,16 +1,17 @@
 # arcadePopulation
 import numpy as np
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
-def logistic(t, k, a):
-	return np.exp(k*t - a)/(1+np.exp(k*t - a))
+
 
 class arcadePopulation:
 	commonFields = [('index', 'uint32'), ('rx', 'float32'), ('ry', 'float32'), ('A', 'b1'), ('G', 'int8', 2), ('I', 'b1')]
 
 	dpi = 12
-	def __init__(self, size_x, size_y, parametersDict):
+	def __init__(self, parametersDict):
 
 		beta = list()
 		primaryInoc = list()
@@ -51,18 +52,29 @@ class arcadePopulation:
 		for i in range(len(pathotypesList)):
 			genotypes[i,i:] = 1
 		self.genotypes = genotypes
+
+		if parametersDict['metaparameters']['placement'] == 'regular_model' :
+			size_x = global_parameters['size_x']
+			size_y = global_parameters['size_y']
+			self.__sx = size_x
+			self.__sy = size_y
+			size = size_x * size_y
+			xx_coords, yy_coords = self.__setGridValues(size_x, size_y)
+		else:
+			placement_file = parametersDict['metaparameters']['placement']
+			xx_coords, yy_coords = self.__setGridValuesFromFile(placement_file)
+			size_x = xx_coords.size
+			size_y = 1
+			size   = xx_coords.size
+			self.__sx = size_x
+			self.__sy = size_y
+
 		if verbose :
 			print("arcadePopulation instance defined")
 			print("setting a population of %d hosts" %(int(size_x*size_y)))
 
-		size_x = global_parameters['size_x']
-		size_y = global_parameters['size_y']
-		self.__sx = size_x
-		self.__sy = size_y
-		size = size_x * size_y
 
 		self.__P = self.setPopulationList(size_x, size_y, self.commonFields)
-		xx_coords, yy_coords = self.__setGridValues(size_x, size_y)
 
 		self.__P['rx'] = xx_coords
 		self.__P['ry'] = yy_coords
@@ -100,6 +112,12 @@ class arcadePopulation:
 		population['index'] = np.arange(size_x*size_y)
 		self.randomGenotyping(populationList=population)
 		return population
+
+	@staticmethod
+	def __setGridValuesFromFile(filename):
+		import pandas as pd
+		coords = pd.read_csv(filename)
+		return coords['x'].values, coords['y'].values
 
 	@staticmethod
 	def __setGridValues(size_x, size_y, asimetric_y = 2.0, separation_x = 0.5):
@@ -154,6 +172,9 @@ class arcadePopulation:
 		 It returns two arrays (x,y) with the coordinates of each host
 		"""
 		return np.copy(self.__P['rx']), np.copy(self.__P['ry'])
+
+	def getShape(self):
+		return self.__sx, self.__sy
 
 	def getAlive(self):
 		"""

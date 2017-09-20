@@ -4,6 +4,8 @@ from scipy import sparse
 from arcadeUtils import displayer
 #from memory_profiler import profile
 import arcadePopulation as aP
+import matplotlib as mpl
+mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -66,7 +68,8 @@ parametersDict = dict(
 			simulations = 5,
 			seeds = [1,2,3,4,5],
 			outname = 'trial',
-			verbose = False
+			verbose = False,
+			placement='regular'
 		)
 
 	)
@@ -91,19 +94,20 @@ class arcadeSimulator:
 		self.__parameter_dictionary = parameter_dictionary
 		try :
 			global_parameters   = parameter_dictionary['global_parameters']
-			size_x = global_parameters['size_x']
-			size_y = global_parameters['size_y']
-			self.__sx = size_x
-			self.__sy = size_y
+
 			self.__cropTime    = global_parameters['crop_time']
 			self.__numberCrops = global_parameters['crops']
 		except KeyError :
 			raise IOError("some of the parameters is not well specified: size_x, size_y, time, crops")
 		self.__disp = displayer(crops=self.__numberCrops, cropDays=self.__cropTime)
-		randomSeed = np.random.randint(0, high=size_x*size_y,
-									   size=len(global_parameters['pathotypes']))
 
-		self.__population = aP.arcadePopulation(size_x, size_y, parameter_dictionary)
+
+		self.__population = aP.arcadePopulation(parameter_dictionary)
+		size_x, size_y    = self.__population.getShape()
+		self.__sx = size_x
+		self.__sy = size_y
+		randomSeed = np.random.randint(0, high=size_x * size_y,
+									   size=len(global_parameters['pathotypes']))
 		self.__population.setSeed(randomSeed[0], patho='P0')
 		self.__population.setSeed(randomSeed[1], patho='P12')
 
@@ -150,7 +154,7 @@ class arcadeSimulator:
 			x_coordinates -= x_coordinates[i]
 			y_coordinates -= y_coordinates[i]
 
-			# xx, yy = np.meshgrid(x_coordinates, y_coordinates)
+
 			dist = np.sqrt((x_coordinates ** 2) + (y_coordinates ** 2))
 			## dc holds for direct contact
 			## sc holds for stochastic contact
@@ -165,7 +169,7 @@ class arcadeSimulator:
 
 			self.__S[i, :] = 1e-5 * sc  # .T.reshape((size_x * size_y))
 			self.__S[i, i] = 0
-	#@profile()
+
 	def simulate(self, refresh = 10):
 		self.__setStatistics()
 		self.__buildMatrix()
@@ -176,7 +180,6 @@ class arcadeSimulator:
 			for i in range(self.__cropTime):
 				if self.__v :
 					self.__disp.update()
-
 				self.__population.updateAlive()
 				self.__population.primaryInfection()
 				if i % refresh == 0:
@@ -186,8 +189,6 @@ class arcadeSimulator:
 				self.__population.updateInfective()
 				self.__population.updateInoculum()
 				self.__updateStatistics(crop, i)
-				if i % 50 == 0 :
-					self.__population.spatialMap('P0', i, crop)
 			self.__population.nextCrop()
 			for j in range(365 - self.__cropTime):
 				self.__population.updateInoculum()
@@ -204,20 +205,22 @@ class arcadeSimulator:
 		plt.show()
 	def getPopulation(self):
 		return self.__population
-	def saveReport(self, folderName, compress = False, header=True):
+	def saveReport(self, header=True, excel=False):
 		"""
-
-		:param folderName:
-		:param compress
 		:param header
+		:param excel
 		:return:
 		"""
 		import os
 		import pandas as pd
+		folderName = self.__parameter_dictionary['metaparameters']['outfile']
 		try :
 			os.makedirs(folderName)
 		except FileExistsError:
 			pass
+		excel_writer = None
+		if excel :
+			excel_writer = pd.ExcelWriter(folderName + '/timeSeries.xlsx')
 		for patho in self.__parameter_dictionary['global_parameters']['pathotypes'] :
 			statistics = pd.DataFrame(self.__stats[patho])
 			statistics['sim '] = self.__sim
@@ -229,10 +232,13 @@ class arcadeSimulator:
 				f.write(statistics.to_csv(sep=",", index=False, header=False,
 										  float_format='%8.4f'))
 			f.close()
-		if compress:
-			pass
-	def printHeader(self, folderName):
+			if excel:
+				statistics.to_excel(excel_writer, patho)
+		excel_writer.save()
+
+	def printHeader(self):
 		import os
+		folderName = self.__parameter_dictionary['metaparameters']['outfile']
 		for patho in self.__parameter_dictionary['global_parameters']['pathotypes']:
 			try:
 				os.makedirs(folderName)
