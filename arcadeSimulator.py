@@ -1,7 +1,7 @@
 #!/home/charizard/anaconda3/bin/python3
 import numpy as np
 from scipy import sparse
-from arcadeUtils import displayer
+#from arcadeUtils import displayer
 #from memory_profiler import profile
 import arcadePopulation as aP
 import matplotlib as mpl
@@ -67,7 +67,7 @@ parametersDict = dict(
 			mortality = 'lognormal_model',
 			simulations = 5,
 			seeds = [1,2,3,4,5],
-			outname = 'trial',
+			outfile = 'trial',
 			verbose = False,
 			placement='regular'
 		)
@@ -99,7 +99,7 @@ class arcadeSimulator:
 			self.__numberCrops = global_parameters['crops']
 		except KeyError :
 			raise IOError("some of the parameters is not well specified: size_x, size_y, time, crops")
-		self.__disp = displayer(crops=self.__numberCrops, cropDays=self.__cropTime)
+		#self.__disp = displayer(crops=self.__numberCrops, cropDays=self.__cropTime)
 
 
 		self.__population = aP.arcadePopulation(parameter_dictionary)
@@ -174,12 +174,12 @@ class arcadeSimulator:
 		self.__setStatistics()
 		self.__buildMatrix()
 		S_precalc = np.zeros(self.__sx * self.__sy)
-		if self.__v :
-			self.__disp.start()
+		#if self.__v :
+		#	self.__disp.start()
 		for crop in range(self.__numberCrops):
 			for i in range(self.__cropTime):
-				if self.__v :
-					self.__disp.update()
+				#if self.__v :
+				#	self.__disp.update()
 				self.__population.updateAlive()
 				self.__population.primaryInfection()
 				if i % refresh == 0:
@@ -234,7 +234,8 @@ class arcadeSimulator:
 			f.close()
 			if excel:
 				statistics.to_excel(excel_writer, patho)
-		excel_writer.save()
+		if excel:
+			excel_writer.save()
 
 	def printHeader(self):
 		import os

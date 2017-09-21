@@ -26,6 +26,11 @@ def printReport(parameters):
 	print("\tMortality model = {0}".format(parameters['metaparameters']['mortality']))
 	print("\tPlacement model = {0}".format(parameters['metaparameters']['placement']))
 	print("\tCrops = {0}".format(parameters['global_parameters']['crops']))
+
+def setExcelOutput(parameters):
+	outputFolder = parameters['metaparameters']['outfile']
+	
+
 try :
 	parameters_file = sys.argv[1]
 except IndexError:

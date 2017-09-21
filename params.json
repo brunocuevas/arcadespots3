@@ -28,7 +28,7 @@
     },
     "metaparameters": {
         "mortality": "lognormal_model",
-        "outname": "trial",
+        "outfile": "trial",
         "placement": "wild_population_coordinates.csv",
         "seeds": [
             12,
@@ -38,7 +38,7 @@
             5
         ],
         "simulations": 5,
-		"verbose": false
+		"verbose": true
     },
     "specific_parameters": {
         "P": {

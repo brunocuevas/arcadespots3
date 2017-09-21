@@ -1,5 +1,6 @@
 # arcadePopulation
 import numpy as np
+import pandas as pd
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
@@ -115,7 +116,7 @@ class arcadePopulation:
 
 	@staticmethod
 	def __setGridValuesFromFile(filename):
-		import pandas as pd
+
 		coords = pd.read_csv(filename)
 		return coords['x'].values, coords['y'].values
 
