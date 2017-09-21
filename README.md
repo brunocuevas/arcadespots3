@@ -5,6 +5,8 @@ Providing epidemiological models for plant-virus pathosystems
 
 ## Summary
 
+![arcadeSpots3_cover](./doc/arcadeSpots3_cover.png)
+
 Plant pathogens are important due to their socioeconomical impact.
 Since experimentation with pathogens at environmental level is
 technically difficult and expensive, epidemiologial 
