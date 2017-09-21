@@ -27,10 +27,6 @@ def printReport(parameters):
 	print("\tPlacement model = {0}".format(parameters['metaparameters']['placement']))
 	print("\tCrops = {0}".format(parameters['global_parameters']['crops']))
 
-def setExcelOutput(parameters):
-	outputFolder = parameters['metaparameters']['outfile']
-	
-
 try :
 	parameters_file = sys.argv[1]
 except IndexError:
@@ -39,8 +35,11 @@ except IndexError:
 params = parseArgumentsFile('params.json')
 if params['metaparameters']['verbose'] :
 	printReport(params)
+aaa = None
 for i in range(params['metaparameters']['simulations']):
 	aaa = aS.arcadeSimulator(params, sim=i)
 	aaa.simulate()
-	aaa.printHeader()
+	if i == 0:
+		aaa.printHeader()
 	aaa.saveReport(header=True)
+aS.arcadeOutput(params, aaa.getPopulation())

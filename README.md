@@ -1,5 +1,5 @@
 # arcadeSpots 3
-
+![arcadeSpots3_gif](./doc/epidemic.gif)
 
 Providing epidemiological models for plant-virus pathosystems
 
@@ -40,6 +40,7 @@ possible to obtain a sample of the parameters file using
         indent = 4, sort_keys = True))
     f.close()
  
+![arcadeSpots3_parameters](./doc/arcadeSpots3_inputParameters.png)
 
 Once parameters are specified, it is possible to
 run simulations using just

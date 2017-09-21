@@ -174,12 +174,8 @@ class arcadeSimulator:
 		self.__setStatistics()
 		self.__buildMatrix()
 		S_precalc = np.zeros(self.__sx * self.__sy)
-		#if self.__v :
-		#	self.__disp.start()
 		for crop in range(self.__numberCrops):
 			for i in range(self.__cropTime):
-				#if self.__v :
-				#	self.__disp.update()
 				self.__population.updateAlive()
 				self.__population.primaryInfection()
 				if i % refresh == 0:
@@ -189,6 +185,12 @@ class arcadeSimulator:
 				self.__population.updateInfective()
 				self.__population.updateInoculum()
 				self.__updateStatistics(crop, i)
+				if i % refresh == 0 and self.__parameter_dictionary['metaparameters']['map']:
+					for patho in self.__parameter_dictionary['global_parameters']['pathotypes']:
+						folder = self.__parameter_dictionary['metaparameters']['outfile']
+						name = './%s/spatial_map_sim%s_patho%s_crop%d_time%d.png'
+						name = name % (folder, self.__sim, patho, crop, i)
+						self.__population.spatialMap(patho, time=i, crop=crop, filename=name)
 			self.__population.nextCrop()
 			for j in range(365 - self.__cropTime):
 				self.__population.updateInoculum()
@@ -248,5 +250,47 @@ class arcadeSimulator:
 			f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'w')
 			f.write('crop,time,exposition,infective,alive,inoculum,sim\n')
 			f.close()
+
+# I think that by now this wil be placed outside the object
+def arcadeOutput(params, population):
+	"""
+
+	:param params:
+	:param population:
+	:return:
+	"""
+	import pandas as pd
+	import json
+	print("processing output")
+	print("\tsetting an excel time series file for users that are not familiar with Data Analysis")
+	folderName = params['metaparameters']['outfile']
+	excel = pd.ExcelWriter(folderName + '/timeSeries.xlsx')
+	for patho in params['global_parameters']['pathotypes'] :
+		temporal_table = pd.read_csv('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho))
+		print("\t\t%s" % patho)
+		temporal_table.to_excel(excel_writer=excel, sheet_name=patho, index=False)
+	excel.save()
+	print("\tfinished!")
+	print("\tprinting parameters")
+	f = open('./%s/simulation_parameters.json' % folderName, 'w')
+	f.write(json.dumps(params, indent=4, sort_keys=True))
+	f.close()
+	print("\tfinished!")
+	print("\twriting coordinates of each of the hosts")
+	coord_x, coord_y = population.getCoordinates()
+	genotypes        = population.getGenotypes()
+	coordinates_dataframe = pd.DataFrame.from_items([
+		('x', coord_x),
+		('y', coord_y),
+		('genotype', genotypes)
+	])
+	f = open('./%s/host_coordinates_file.csv' % folderName, 'w')
+	f.write(coordinates_dataframe.to_csv(
+		index=False,
+		sep=","
+	))
+	print("\tfinished!")
+
+
 
 

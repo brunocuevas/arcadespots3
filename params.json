@@ -1,13 +1,13 @@
 {
     "global_parameters": {
         "crop_time": 180,
-        "crops": 3,
+        "crops": 1,
         "pathotypes": [
             "P0",
             "P12"
         ],
-        "size_x": 50,
-        "size_y": 50
+        "size_x": 100,
+        "size_y": 100
     },
     "interspecific_parameters": {
         "C": {
@@ -28,17 +28,18 @@
     },
     "metaparameters": {
         "mortality": "lognormal_model",
-        "outfile": "trial",
-        "placement": "wild_population_coordinates.csv",
+        "outfile": "trial_2",
+        "placement": "regular_model",
         "seeds": [
-            12,
+            56,
             1000,
             34,
             4,
             5
         ],
-        "simulations": 5,
-		"verbose": true
+        "simulations": 1,
+		"verbose": true,
+        "map": true
     },
     "specific_parameters": {
         "P": {

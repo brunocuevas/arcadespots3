@@ -74,7 +74,7 @@ class arcadePopulation:
 			print("arcadePopulation instance defined")
 			print("setting a population of %d hosts" %(int(size_x*size_y)))
 
-
+		self.__genotypeList = None
 		self.__P = self.setPopulationList(size_x, size_y, self.commonFields)
 
 		self.__P['rx'] = xx_coords
@@ -94,6 +94,7 @@ class arcadePopulation:
 		self.__mortality = mortalityFunctions[parametersDict['metaparameters']['mortality']]()
 		self.__mortality = self.__mortality.astype(int)
 
+
 		print("population set")
 
 	# STATIC METHODS
@@ -103,7 +104,8 @@ class arcadePopulation:
 
 	def randomGenotyping(self, populationList):
 		S = self.__sx*self.__sy
-		randomGenotypes = np.random.choice((0,1,2), size=S, p=self.__gP)
+		randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
+		self.__genotypeList = randomGenotypes
 		populationList['G'] = self.genotypes[randomGenotypes,:]
 
 
@@ -173,6 +175,16 @@ class arcadePopulation:
 		 It returns two arrays (x,y) with the coordinates of each host
 		"""
 		return np.copy(self.__P['rx']), np.copy(self.__P['ry'])
+
+	def getGenotypes(self):
+		"""
+
+		:return:
+		"""
+		try:
+			return np.copy(self.__genotypeList)
+		except AttributeError:
+			raise IOError("There was some issue dealing with the genotypes")
 
 	def getShape(self):
 		return self.__sx, self.__sy
@@ -375,7 +387,7 @@ class arcadePopulation:
 		else:
 			plt.savefig("patho_{0}_day_{1}.png".format(patho, time), dpi=300)
 			plt.close()
-	def spatialMap(self, patho, time, crop, show=False):
+	def spatialMap(self, patho, time, crop, show=False, filename = False):
 		try :
 			pathoLoc = self.__loc[patho]
 		except KeyError:
@@ -388,6 +400,7 @@ class arcadePopulation:
 			self.__P['ry'].max() + 1
 
 		]
+		plt.suptitle('time = %d' % time)
 		##------------------------------------------------------------#
 		## exposition
 		##------------------------------------------------------------#
@@ -413,7 +426,7 @@ class arcadePopulation:
 		## alive
 		##------------------------------------------------------------#
 		plt.subplot(223)
-		plt.title('alive')
+		plt.title('mortality')
 		ax = plt.hexbin(self.__P['rx'][self.__P['A'] == False],
 						 self.__P['ry'][self.__P['A']== False],
 						 cmap='viridis', extent=axis, gridsize=20)
@@ -425,12 +438,15 @@ class arcadePopulation:
 		##------------------------------------------------------------#
 		plt.subplot(224)
 		plt.title('primary inoculum')
-		ax = plt.scatter(self.__P['rx'],self.__P['ry'], c=self.__w[:,pathoLoc],
+		ax = plt.scatter(self.__P['rx'],self.__P['ry'], c=np.log10(self.__w[:,pathoLoc]),
 					cmap='viridis')
 		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
 		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
 		plt.colorbar(ax)
-		plt.savefig('space_map_patho_%s_crop_%d_time_%d.png' % (patho, crop, time), dpi=300)
+		if filename :
+			plt.savefig(filename, dpi=300)
+		else:
+			plt.savefig('space_map_patho_%s_crop_%d_time_%d.png' % (patho, crop, time), dpi=300)
 		if show:
 			plt.show()
 		else:
