@@ -108,8 +108,11 @@ class arcadeSimulator:
 		self.__sy = size_y
 		randomSeed = np.random.randint(0, high=size_x * size_y,
 									   size=len(global_parameters['pathotypes']))
-		self.__population.setSeed(randomSeed[0], patho='P0')
-		self.__population.setSeed(randomSeed[1], patho='P12')
+		iter = 0
+		for patho in global_parameters['pathotypes']:
+			self.__population.setSeed(randomSeed[iter], patho=patho)
+			iter += 1
+
 
 	def __setStatistics(self):
 		statistics = dict()

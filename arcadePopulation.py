@@ -9,8 +9,6 @@ import scipy.stats as stats
 
 
 class arcadePopulation:
-	commonFields = [('index', 'uint32'), ('rx', 'float32'), ('ry', 'float32'), ('A', 'b1'), ('G', 'int8', 2), ('I', 'b1')]
-
 	dpi = 12
 	def __init__(self, parametersDict):
 
@@ -19,6 +17,7 @@ class arcadePopulation:
 		alpha = list()
 		k = list()
 		s = list()
+
 		global_parameters   = parametersDict['global_parameters']
 		specific_parameters = parametersDict['specific_parameters']
 		interspecific_parameters = parametersDict['interspecific_parameters']
@@ -75,7 +74,13 @@ class arcadePopulation:
 			print("setting a population of %d hosts" %(int(size_x*size_y)))
 
 		self.__genotypeList = None
-		self.__P = self.setPopulationList(size_x, size_y, self.commonFields)
+		commonFields = [('index', 'uint32'),
+						('rx', 'float32'),
+						('ry', 'float32'),
+						('A', 'b1'),
+						('G', 'int8', len(pathotypesList)	),
+						('I', 'b1')]
+		self.__P = self.setPopulationList(size_x, size_y, commonFields)
 
 		self.__P['rx'] = xx_coords
 		self.__P['ry'] = yy_coords
@@ -106,7 +111,13 @@ class arcadePopulation:
 		S = self.__sx*self.__sy
 		randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
 		self.__genotypeList = randomGenotypes
-		populationList['G'] = self.genotypes[randomGenotypes,:]
+		try:
+			populationList['G'] = self.genotypes[randomGenotypes, :]
+		except ValueError:
+			temp = self.genotypes[randomGenotypes, :]
+			populationList['G'] = temp.reshape(temp.size)
+		print(populationList['G'].shape)
+
 
 
 	def setPopulationList(self, size_x, size_y, fields):
@@ -243,8 +254,9 @@ class arcadePopulation:
 		# This is necessary to avoid double or triple infections
 
 		controlInfective = np.sum(self.__y, axis=1)
+
 		self.__d += self.__x >= 1.0
-		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 2)).T * self.__P['G']
+		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 2).T * self.__P['G'].T).T
 		self.__y =  (self.__P['A'] * self.__y.T).T
 
 	def updateExposition(self, I):

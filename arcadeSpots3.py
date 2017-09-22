@@ -32,7 +32,7 @@ try :
 except IndexError:
 	print("missing parameters file")
 	quit()
-params = parseArgumentsFile('params.json')
+params = parseArgumentsFile(parameters_file)
 if params['metaparameters']['verbose'] :
 	printReport(params)
 aaa = None
@@ -41,5 +41,5 @@ for i in range(params['metaparameters']['simulations']):
 	aaa.simulate()
 	if i == 0:
 		aaa.printHeader()
-	aaa.saveReport(header=True)
+	aaa.saveReport(header=False)
 aS.arcadeOutput(params, aaa.getPopulation())
