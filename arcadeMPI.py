@@ -46,10 +46,10 @@ control_header = True
 for sim in tasks :
 	aaa = aS.arcadeSimulator(arguments, sim=sim)
 	if rank == 1 and control_header :
-		aaa.printHeader(arguments['metaparameters']['outname'])
+		aaa.printHeader()
 		control_header = False
 	aaa.simulate()
-	aaa.saveReport(arguments['metaparameters']['outname'], header=False)
+	aaa.saveReport(header=False)
 
 
 
