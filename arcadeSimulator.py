@@ -106,12 +106,9 @@ class arcadeSimulator:
 		size_x, size_y    = self.__population.getShape()
 		self.__sx = size_x
 		self.__sy = size_y
-		randomSeed = np.random.randint(0, high=size_x * size_y,
-									   size=len(global_parameters['pathotypes']))
-		iter = 0
+
 		for patho in global_parameters['pathotypes']:
-			self.__population.setSeed(randomSeed[iter], patho=patho)
-			iter += 1
+			self.__population.setSeed(patho=patho)
 
 
 	def __setStatistics(self):
@@ -210,10 +207,9 @@ class arcadeSimulator:
 		plt.show()
 	def getPopulation(self):
 		return self.__population
-	def saveReport(self, header=True, excel=False):
+	def saveReport(self, header=True):
 		"""
 		:param header
-		:param excel
 		:return:
 		"""
 		import os
@@ -223,36 +219,20 @@ class arcadeSimulator:
 			os.makedirs(folderName)
 		except FileExistsError:
 			pass
-		excel_writer = None
-		if excel :
-			excel_writer = pd.ExcelWriter(folderName + '/timeSeries.xlsx')
 		for patho in self.__parameter_dictionary['global_parameters']['pathotypes'] :
 			statistics = pd.DataFrame(self.__stats[patho])
 			statistics['sim '] = self.__sim
-			f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'a+')
-			if self.__sim == 0 :
+			filename = './%s/timeSeriesStatistics_%s.csv' % (folderName, patho)
+			if os.path.exists(filename):
+				f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'a+')
 				f.write(statistics.to_csv(sep=",", index=False, float_format='%8.4f',
 										  header=header))
 			else:
-				f.write(statistics.to_csv(sep=",", index=False, header=False,
+				f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'w')
+				f.write(statistics.to_csv(sep=",", index=False, header=True,
 										  float_format='%8.4f'))
 			f.close()
-			if excel:
-				statistics.to_excel(excel_writer, patho)
-		if excel:
-			excel_writer.save()
 
-	def printHeader(self):
-		import os
-		folderName = self.__parameter_dictionary['metaparameters']['outfile']
-		for patho in self.__parameter_dictionary['global_parameters']['pathotypes']:
-			try:
-				os.makedirs(folderName)
-			except FileExistsError:
-				pass
-			f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'w')
-			f.write('crop,time,exposition,infective,alive,inoculum,sim\n')
-			f.close()
 
 # I think that by now this wil be placed outside the object
 def arcadeOutput(params, population):

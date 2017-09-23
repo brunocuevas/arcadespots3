@@ -151,11 +151,12 @@ class arcadePopulation:
 			attributes.append((item, numpyType))
 		return attributes
 
-	def setSeed(self, seedValue, patho):
+	def setSeed(self, patho, method = 'random', number = 1):
 		"""
 		arcadeSpots3 - arcadePopulation - setSeed()
-		:param seedValue:
+		:param method:
 		:param patho:
+		:param number:
 		:return:
 
 		It sets the exposition value of a given position to 1.0,
@@ -166,7 +167,10 @@ class arcadePopulation:
 			pathoLoc = self.__loc[patho]
 		except KeyError:
 			raise KeyError("There is no {0} pathotype specified".format(patho))
-		self.__x[seedValue, pathoLoc] = 1.0
+		if method == 'random' :
+			possible_hosts = np.where(self.__P['G'][:,pathoLoc] == 1)[0]
+			seedValue = np.random.choice(possible_hosts, number)
+			self.__x[seedValue, pathoLoc] = 1.0
 
 	def getPathotypes(self):
 		"""

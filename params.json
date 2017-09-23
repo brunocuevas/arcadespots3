@@ -44,7 +44,7 @@
             4,
             5
         ],
-        "simulations": 1,
+        "simulations": 5,
 		"verbose": true,
         "map": true
     },
