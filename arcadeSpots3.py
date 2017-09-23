@@ -27,6 +27,7 @@ def printReport(parameters):
 	print("\tPlacement model = {0}".format(parameters['metaparameters']['placement']))
 	print("\tCrops = {0}".format(parameters['global_parameters']['crops']))
 
+parameters_file = None
 try :
 	parameters_file = sys.argv[1]
 except IndexError:
@@ -39,8 +40,6 @@ aaa = None
 for i in range(params['metaparameters']['simulations']):
 	aaa = aS.arcadeSimulator(params, sim=i)
 	aaa.simulate()
-	if i == 0:
-		aaa.printHeader()
 	aaa.saveReport(header=False)
 aS.arcadeOutput(params, aaa.getPopulation())
 
