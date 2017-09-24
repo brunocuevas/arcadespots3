@@ -1,13 +1,14 @@
 {
     "global_parameters": {
         "crop_time": 180,
-        "crops": 1,
+        "crops": 3,
         "pathotypes": [
             "P0",
-            "P12"
+            "P12",
+            "P123"
         ],
-        "size_x": 100,
-        "size_y": 100
+        "size_x": 20,
+        "size_y": 20
     },
     "interspecific_parameters": {
         "C": {
@@ -34,8 +35,8 @@
         ]
     },
     "metaparameters": {
-        "mortality": "lognormal_model",
-        "outfile": "trial_2",
+        "mortality": "sanity_model",
+        "outfile": "sanity_model",
         "placement": "regular_model",
         "seeds": [
             56,
@@ -44,7 +45,7 @@
             4,
             5
         ],
-        "simulations": 5,
+        "simulations": 1,
 		"verbose": true,
         "map": true
     },
@@ -65,14 +66,14 @@
             "P123": 1.25
         },
         "k": {
-            "P0": 0.32,
-            "P12": 0.32,
-            "P123": 0.32
+            "P0": 1.629,
+            "P12": 0.628,
+            "P123": 1.229
         },
         "s": {
-            "P0": 4.158,
-            "P12": 4.888,
-            "P123": 4.4378
+            "P0": 0.1,
+            "P12": 0.1,
+            "P123": 0.1
         }
     }
 }

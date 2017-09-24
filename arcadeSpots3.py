@@ -40,6 +40,6 @@ aaa = None
 for i in range(params['metaparameters']['simulations']):
 	aaa = aS.arcadeSimulator(params, sim=i)
 	aaa.simulate()
-	aaa.saveReport(header=False)
+	aaa.saveReport()
 aS.arcadeOutput(params, aaa.getPopulation())
 

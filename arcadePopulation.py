@@ -90,7 +90,8 @@ class arcadePopulation:
 		mortalityFunctions = dict(
 			linear_model   = self.__linearMortalityModel,
 			gaussian_model = self.__gaussianMortalityModel,
-			lognormal_model = self.__logNormalMortalityModel
+			lognormal_model = self.__logNormalMortalityModel,
+			sanity_model   = self.__sanityModel
 		)
 		self.__x = np.zeros((size, len(pathotypesList)))
 		self.__y = np.zeros((size, len(pathotypesList)))
@@ -337,7 +338,10 @@ class arcadePopulation:
 		Updates the primary inoculum, which gets increased when hosts die, and it modifies
 		the values of the alive state
 		"""
-		self.__w += (self.__d == self.__mortality)*(self.__y == True)*self.__pI
+
+		ref_vals = np.array([self.__C[i,i] for i in range(len(self.__patho))])
+		ref_vals = ref_vals.reshape(1, len(self.__patho))
+		self.__w += (self.__d == self.__mortality)*(self.getTranmission() / ref_vals)*self.__pI
 		self.__P['A'][np.sum(self.__d >= self.__mortality, axis=1) >= 1.0] = False
 
 	def updateInoculum(self):
@@ -522,3 +526,9 @@ class arcadePopulation:
 		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
 		u = stats.norm.ppf(x)
 		return np.exp(u*self.__k + self.__s) + self.dpi
+
+	def __sanityModel(self):
+		hazard = self.__s * np.exp(self.__k)
+		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+		u = np.log(x)*(1 / -hazard)
+		return u.astype(int) + self.dpi

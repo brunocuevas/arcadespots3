@@ -171,6 +171,7 @@ class arcadeSimulator:
 			self.__S[i, i] = 0
 
 	def simulate(self, refresh = 10):
+		import  os
 		self.__setStatistics()
 		self.__buildMatrix()
 		S_precalc = np.zeros(self.__sx * self.__sy)
@@ -188,6 +189,10 @@ class arcadeSimulator:
 				if i % refresh == 0 and self.__parameter_dictionary['metaparameters']['map']:
 					for patho in self.__parameter_dictionary['global_parameters']['pathotypes']:
 						folder = self.__parameter_dictionary['metaparameters']['outfile']
+						if os.path.exists(folder):
+							pass
+						else:
+							os.makedirs(folder)
 						name = './%s/spatial_map_sim%s_patho%s_crop%d_time%d.png'
 						name = name % (folder, self.__sim, patho, crop, i)
 						self.__population.spatialMap(patho, time=i, crop=crop, filename=name)
@@ -207,7 +212,7 @@ class arcadeSimulator:
 		plt.show()
 	def getPopulation(self):
 		return self.__population
-	def saveReport(self, header=True):
+	def saveReport(self):
 		"""
 		:param header
 		:return:
@@ -226,7 +231,7 @@ class arcadeSimulator:
 			if os.path.exists(filename):
 				f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'a+')
 				f.write(statistics.to_csv(sep=",", index=False, float_format='%8.4f',
-										  header=header))
+										  header=False))
 			else:
 				f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'w')
 				f.write(statistics.to_csv(sep=",", index=False, header=True,

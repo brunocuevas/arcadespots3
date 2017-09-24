@@ -47,7 +47,7 @@ tasks = comm.scatter(tasks, root=0)
 for sim in tasks :
 	aaa = aS.arcadeSimulator(arguments, sim=sim)
 	aaa.simulate()
-	aaa.saveReport(header=False)
+	aaa.saveReport()
 
 
 
