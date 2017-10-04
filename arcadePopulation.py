@@ -9,49 +9,59 @@ import scipy.stats as stats
 
 
 class arcadePopulation:
-	dpi = 12
+
 	def __init__(self, parametersDict):
 
-		beta = list()
+
 		primaryInoc = list()
-		alpha = list()
-		k = list()
-		s = list()
+		k_omega = list()
+		sigma = list()
+		mu = list()
 
 		global_parameters   = parametersDict['global_parameters']
 		specific_parameters = parametersDict['specific_parameters']
 		interspecific_parameters = parametersDict['interspecific_parameters']
 		verbose = parametersDict['metaparameters']['verbose']
-		self.__gP = np.array(interspecific_parameters['genotype_probability'])
+
+
+
 		pathotypesList = sorted(global_parameters['pathotypes'])
+		self.__gP = np.array(interspecific_parameters['genotype_probability'][:len(pathotypesList)])
 		self.__patho = pathotypesList
 		self.__loc   = dict()
+
 		i = 0
+
 		for item in pathotypesList:
-			beta.append(specific_parameters['beta'][item])
-			primaryInoc.append(specific_parameters['P'][item])
-			alpha.append(specific_parameters['alpha'][item])
-			k.append(specific_parameters['k'][item])
-			s.append(specific_parameters['s'][item])
+
+			primaryInoc.append(specific_parameters['omega'][item])
+			k_omega.append(specific_parameters['k_omega'][item])
+			sigma.append(specific_parameters['sigma'][item])
+			mu.append(specific_parameters['mu'][item])
 			self.__loc[item] = i
 			i += 1
-		self.__beta = np.array(beta)
-		self.__pI   = np.array(primaryInoc)
-		self.__alpha = np.array(alpha)
-		self.__k = np.array(k)
-		self.__s = np.array(s)
+
+
+		self.__omega   = np.array(primaryInoc)
+		self.__k_omega = np.array(k_omega)
+		self.__sigma = np.array(sigma)
+		self.__mu = np.array(mu)
+		self.__dpi = parametersDict['global_parameters']['dpi']
+
+
 		C = np.zeros((len(pathotypesList), len(pathotypesList)))
 		for patho1_index in range(len(pathotypesList)) :
 			for patho2_index in range(len(pathotypesList)) :
 				patho1 = pathotypesList[patho1_index]
 				patho2 = pathotypesList[patho2_index]
 				C[patho1_index, patho2_index] = interspecific_parameters['C'][patho1][patho2]
-
 		self.__C    = C
+
+
 		genotypes = np.zeros((len(pathotypesList) + 1, len(pathotypesList)))
 		for i in range(len(pathotypesList)):
 			genotypes[i,i:] = 1
-		self.genotypes = genotypes
+		self.__genotypes = genotypes
 
 		if parametersDict['metaparameters']['placement'] == 'regular_model' :
 			size_x = global_parameters['size_x']
@@ -109,15 +119,18 @@ class arcadePopulation:
 	## createAttributeList
 
 	def randomGenotyping(self, populationList):
+		if np.sum(self.__gP) < 1 :
+			self.__gP /= np.sum(self.__gP)
+			#raise UserWarning("genotypes of the host were not properly defined")
 		S = self.__sx*self.__sy
 		randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
 		self.__genotypeList = randomGenotypes
 		try:
-			populationList['G'] = self.genotypes[randomGenotypes, :]
+			populationList['G'] = self.__genotypes[randomGenotypes, :]
 		except ValueError:
-			temp = self.genotypes[randomGenotypes, :]
+			temp = self.__genotypes[randomGenotypes, :]
 			populationList['G'] = temp.reshape(temp.size)
-		print(populationList['G'].shape)
+
 
 
 
@@ -169,7 +182,10 @@ class arcadePopulation:
 		except KeyError:
 			raise KeyError("There is no {0} pathotype specified".format(patho))
 		if method == 'random' :
-			possible_hosts = np.where(self.__P['G'][:,pathoLoc] == 1)[0]
+			try:
+				possible_hosts = np.where(self.__P['G'][:,pathoLoc] == 1)[0]
+			except IndexError:
+				possible_hosts = np.where(self.__P['G'][:] == 1)[0]
 			seedValue = np.random.choice(possible_hosts, number)
 			self.__x[seedValue, pathoLoc] = 1.0
 
@@ -261,7 +277,7 @@ class arcadePopulation:
 		controlInfective = np.sum(self.__y, axis=1)
 
 		self.__d += self.__x >= 1.0
-		self.__y +=  ((self.__d == self.dpi).T *(controlInfective < 2).T * self.__P['G'].T).T
+		self.__y +=  ((self.__d == self.__dpi).T * (controlInfective < 2).T * self.__P['G'].T).T
 		self.__y =  (self.__P['A'] * self.__y.T).T
 
 	def updateExposition(self, I):
@@ -286,7 +302,7 @@ class arcadePopulation:
 		#self.__x[sSIE == True]  += 1.0
 		self.__x[self.__x > 1.0] = 1.0
 
-	def stochasticSecondaryInfections(self, S, method = 'gillespie'):
+	def stochasticSecondaryInfections(self, S, method = 'tau_leap'):
 		"""
 		arcadeSpots3 - arcadePopulation - stochasticSecondaryInfections()
 		:param S:
@@ -323,6 +339,8 @@ class arcadePopulation:
 		"""
 		if len(probabilityVector.shape) == 1 :
 			oA = np.sum(probabilityVector)
+			if oA == 0.0 :
+				return np.array([], dtype='int32')
 			events             = np.arange(probabilityVector.size)
 			n                  = np.random.poisson(oA*time_step)
 			chosen_events      = np.random.choice(events, n, replace = False,
@@ -341,7 +359,7 @@ class arcadePopulation:
 
 		ref_vals = np.array([self.__C[i,i] for i in range(len(self.__patho))])
 		ref_vals = ref_vals.reshape(1, len(self.__patho))
-		self.__w += (self.__d == self.__mortality)*(self.getTranmission() / ref_vals)*self.__pI
+		self.__w += (self.__d == self.__mortality)*(self.getTranmission() / ref_vals)*self.__omega
 		self.__P['A'][np.sum(self.__d >= self.__mortality, axis=1) >= 1.0] = False
 
 	def updateInoculum(self):
@@ -351,7 +369,7 @@ class arcadePopulation:
 
 		Updates the primary inoculum upon degradation
 		"""
-		self.__w *= self.__alpha
+		self.__w *= self.__k_omega
 
 	def primaryInfection(self):
 		"""
@@ -374,11 +392,22 @@ class arcadePopulation:
 
 		Resets all the values but the primary inoculum
 		"""
-		self.__w[:,:] += self.__pI*((self.__P['A'] == True)*(self.__y == True).T).T
+		self.__w[:,:] += self.__omega * ((self.__P['A'] == True) * (self.__y == True).T).T
 		self.__x[:,:] = 0.0
 		self.__y[:,:] = False
 		self.__d[:,:] = 0
 		self.__P['A'][:] = True
+
+	def modifyPopulation(self, ind, parameter, value):
+		try :
+			self.__P[parameter]
+		except KeyError:
+			raise IOError("there is not such an attribute %s" % parameter)
+		try :
+			self.__P[parameter][ind]
+		except IndexError:
+			raise IOError("there is not such an individual %d" % ind)
+		self.__P[parameter][ind] = value
 
 	def plotPopulation(self, patho, time=None, show=True):
 		try:
@@ -509,26 +538,26 @@ class arcadePopulation:
 
 	def __linearMortalityModel(self):
 		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
-		tau = np.log(x) / (-self.__k)
+		tau = np.log(x) / (-self.__sigma)
 		tau = np.round(tau, 0)
-		tau += self.__s
-		tau += self.dpi
+		tau += self.__mu
+		tau += self.__dpi
 		return tau
 
 	def __gaussianMortalityModel(self):
 
 		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
 		u = stats.norm.ppf(x)
-		return u*self.__k + self.__s+ self.dpi
+		return u*self.__sigma + self.__mu + self.__dpi
 
 
 	def __logNormalMortalityModel(self):
 		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
 		u = stats.norm.ppf(x)
-		return np.exp(u*self.__k + self.__s) + self.dpi
+		return np.exp(u * self.__sigma + self.__mu) + self.__dpi
 
 	def __sanityModel(self):
-		hazard = self.__s * np.exp(self.__k)
+		hazard = self.__mu * np.exp(self.__sigma)
 		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
 		u = np.log(x)*(1 / -hazard)
-		return u.astype(int) + self.dpi
+		return u.astype(int) + self.__dpi

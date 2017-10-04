@@ -15,64 +15,62 @@ sns.set_style('whitegrid')
 sns.set_palette('Set2')
 
 
-# initialization
-parametersDict = dict(
+parametersDict = list([
+	dict(
 		global_parameters = dict(
 			pathotypes = ['P0', 'P12'],
 			size_x = 50,
 			size_y = 50,
 			crop_time = 180,
-			crops  = 2
+			crops  = 2,
+			k_beta = 1.25,
+			k_alpha = 0.1,
+			c = 1e-5,
+			epsilon_beta  = 0.01,
+			epsilon_alpha = 0.25,
+			dpi = 7
 		),
 		specific_parameters = dict(
-			beta = dict(
-				P0 = 1.0,
-				P12 = 0.75
+			omega = dict(
+				P0 = 3e13,
+				P12 = 2.4e12,
+				P123 = 1.9e12
 			),
-			n = dict(
-				P0 = 15.0,
-				P12 = 19.0
+			k_omega = dict(
+				P0 = 0.906,
+				P12 = 0.920,
+				P123 = 0.917
 			),
-			P = dict(
-				P0 = 1000,
-				P12 = 800
-			),
-			alpha = dict(
-				P0 = 1.0 - 3.50e-2,
-				P12 = 1.0 - 1.25e-2
-			),
-			k = dict(
+			sigma = dict(
 				P0 = 0.32,
-				P12 = 0.32
+				P12 = 0.32,
+				P123 = 0.32
 			),
-			s = dict(
-				P0 = 4.158,
-				P12 = 4.888
+			mu = dict(
+				P0 = 3.46,
+				P12 = 4.19,
+				P123 = 3.74
 			)
 		),
 		interspecific_parameters = dict(
 			C = dict(
-				P0 = dict(
-					P0  =  1.00,
-					P12 = -0.05
-				),
-				P12 = dict(
-					P0  = -0.35,
-					P12 =  0.60
-				)
-			),
+				P0 = dict(P0  =  1.00,P12 =  0.0,P123 = 0.0),
+				P12 = dict(P0  = -0.409,P12 =  0.489,P123 =-0.275),
+				P123 = dict(P0 = -0.251,P12 = -0.155,P123 = 0.253)),
 			genotype_probability = list([0.5, 0.3, 0.2])
 		),
 		metaparameters = dict(
 			mortality = 'lognormal_model',
+			map = False,
 			simulations = 5,
 			seeds = [1,2,3,4,5],
 			outfile = 'trial',
 			verbose = False,
-			placement='regular'
+			placement='regular_model'
 		)
-
 	)
+])
+# initialization
 def parameters2JSON (dict2store, name):
 	import json
 	f = open(name, 'w')
@@ -80,6 +78,11 @@ def parameters2JSON (dict2store, name):
 	f.close()
 
 class arcadeSimulator:
+	#k_stochastic = 0.1
+	#k_differential = 1.25
+	#e_stochastic = 0.25
+	#e_differential = 1e-2
+	#prob_constant = 1e-5
 	def __init__(self, parameter_dictionary, sim=0):
 		self.__sim = sim
 		try :
@@ -92,15 +95,19 @@ class arcadeSimulator:
 			("\tworking with seed {0}".format(seed))
 		np.random.seed(seed)
 		self.__parameter_dictionary = parameter_dictionary
-		try :
-			global_parameters   = parameter_dictionary['global_parameters']
 
-			self.__cropTime    = global_parameters['crop_time']
-			self.__numberCrops = global_parameters['crops']
-		except KeyError :
-			raise IOError("some of the parameters is not well specified: size_x, size_y, time, crops")
-		#self.__disp = displayer(crops=self.__numberCrops, cropDays=self.__cropTime)
+		global_parameters   = parameter_dictionary['global_parameters']
 
+
+
+		self.__k_stochastic   = parameter_dictionary['global_parameters']['k_alpha']
+		self.__k_determinist  = parameter_dictionary['global_parameters']['k_beta']
+		self.__e_stochastic   = parameter_dictionary['global_parameters']['epsilon_alpha']
+		self.__e_determinist  = parameter_dictionary['global_parameters']['epsilon_beta']
+		self.__stochastic_factor = parameter_dictionary['global_parameters']['c']
+
+		self.__cropTime    = parameter_dictionary['global_parameters']['crop_time']
+		self.__numberCrops = parameter_dictionary['global_parameters']['crops']
 
 		self.__population = aP.arcadePopulation(parameter_dictionary)
 		size_x, size_y    = self.__population.getShape()
@@ -143,11 +150,13 @@ class arcadeSimulator:
 			st_plus[0]['inoculum'] = st['inoculum']
 			self.__stats[patho] = np.concatenate((self.__stats[patho], st_plus))
 
-	def __buildMatrix(self):
+	def __buildMatrix(self, ):
 		size_xy = self.__sx*self.__sy
 		self.__rx, self.__ry = self.__population.getCoordinates()
-		self.__I = sparse.lil_matrix((size_xy, size_xy))
-		self.__S = sparse.lil_matrix((size_xy, size_xy))
+		#self.__I = sparse.csc_matrix((size_xy, size_xy))
+		#self.__S = sparse.csc_matrix((size_xy, size_xy))
+		self.__I = np.zeros((size_xy, size_xy))
+		self.__S = np.zeros((size_xy, size_xy))
 
 		for i in np.arange(self.__sx * self.__sy):
 			x_coordinates, y_coordinates = self.__population.getCoordinates()
@@ -158,18 +167,26 @@ class arcadeSimulator:
 			dist = np.sqrt((x_coordinates ** 2) + (y_coordinates ** 2))
 			## dc holds for direct contact
 			## sc holds for stochastic contact
-			dc = np.exp(-1.25 * dist)
-			sc = np.exp(-0.1 * dist)
+			dc = np.exp(-self.__k_determinist * dist)
+			sc = np.exp(-self.__k_stochastic * dist)
 
-			dc[dc < 1e-2] = 0.0
-			sc[sc < 0.25] = 0.0
+			dc[dc < self.__e_determinist] = 0.0
+			sc[sc < self.__e_stochastic] = 0.0
 
-			self.__I[i, :] = dc  # .T.reshape((size_x * size_y))
+			self.__I[i, :] = dc
 			self.__I[i, i] = 0
 
-			self.__S[i, :] = 1e-5 * sc  # .T.reshape((size_x * size_y))
+			self.__S[i, :] = self.__stochastic_factor * sc
 			self.__S[i, i] = 0
+		self.__I = sparse.csc_matrix(self.__I)
+		self.__S = sparse.csc_matrix(self.__S)
 
+	def getMatrix(self):
+		try:
+			return self.__I, self.__S
+		except AttributeError:
+			self.__buildMatrix()
+			return self.__I, self.__S
 	def simulate(self, refresh = 10):
 		import  os
 		self.__setStatistics()
@@ -214,7 +231,7 @@ class arcadeSimulator:
 		return self.__population
 	def saveReport(self):
 		"""
-		:param header
+		:param
 		:return:
 		"""
 		import os

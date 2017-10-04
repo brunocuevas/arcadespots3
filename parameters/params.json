@@ -1,0 +1,80 @@
+[
+    {
+        "global_parameters": {
+            "c": 1e-05,
+            "crop_time": 180,
+            "crops": 1,
+            "dpi": 7,
+            "epsilon_alpha": 0.25,
+            "epsilon_beta": 0.01,
+            "k_alpha": 0.1,
+            "k_beta": 1.25,
+            "pathotypes": [
+                "P0"
+            ],
+            "size_x": 100,
+            "size_y": 100
+        },
+        "interspecific_parameters": {
+            "C": {
+                "P0": {
+                    "P0": 1.0,
+                    "P12": 0.0,
+                    "P123": 0.0
+                },
+                "P12": {
+                    "P0": -0.409,
+                    "P12": 0.489,
+                    "P123": -0.275
+                },
+                "P123": {
+                    "P0": -0.251,
+                    "P12": -0.155,
+                    "P123": 0.253
+                }
+            },
+            "genotype_probability": [
+                0.5,
+                0.3,
+                0.2
+            ]
+        },
+        "metaparameters": {
+            "map": false,
+            "mortality": "lognormal_model",
+            "outfile": "trial",
+            "placement": "regular_model",
+            "seeds": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "simulations": 3,
+            "verbose": false
+        },
+        "specific_parameters": {
+            "k_omega": {
+                "P0": 0.906,
+                "P12": 0.92,
+                "P123": 0.917
+            },
+            "mu": {
+                "P0": 3.46,
+                "P12": 4.19,
+                "P123": 3.74
+            },
+            "omega": {
+                "P0": 30000000000000.0,
+                "P12": 2400000000000.0,
+                "P123": 1900000000000.0
+            },
+            "sigma": {
+                "P0": 0.32,
+                "P12": 0.32,
+                "P123": 0.32
+            }
+        }
+    }
+]

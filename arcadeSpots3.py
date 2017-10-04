@@ -8,12 +8,10 @@ import sys
 def parseArgumentsFile(fileName):
 	f = open(fileName)
 	json_structure = json.load(f)
-	try :
-		assert json_structure['global_parameters']
-		assert json_structure['specific_parameters']
-		assert json_structure['interspecific_parameters']
-	except KeyError :
-		raise IOError("parameters were not correctly specified. global, specific and interspecific")
+	terms = ['global_parameters', 'specific_parameters', 'interspecific_parameters', 'metaparameters']
+	for batch in json_structure:
+		if not all([k in batch.keys() for k in terms]):
+			raise IOError("parameters were not correctly specified. global, specific and interspecific")
 	return json_structure
 
 def printReport(parameters):
@@ -33,13 +31,15 @@ try :
 except IndexError:
 	print("missing parameters file")
 	quit()
-params = parseArgumentsFile(parameters_file)
-if params['metaparameters']['verbose'] :
-	printReport(params)
-aaa = None
-for i in range(params['metaparameters']['simulations']):
-	aaa = aS.arcadeSimulator(params, sim=i)
-	aaa.simulate()
-	aaa.saveReport()
-aS.arcadeOutput(params, aaa.getPopulation())
+params_batch = parseArgumentsFile(parameters_file)
+
+for params in params_batch :
+	if params['metaparameters']['verbose'] :
+		printReport(params)
+	aaa = None
+	for i in range(params['metaparameters']['simulations']):
+		aaa = aS.arcadeSimulator(params, sim=i)
+		aaa.simulate()
+		aaa.saveReport()
+	aS.arcadeOutput(params, aaa.getPopulation())
 

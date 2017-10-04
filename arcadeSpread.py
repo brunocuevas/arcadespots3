@@ -94,7 +94,8 @@ class arcadeSpread :
 													   self.__coords[:, 1],
 													   bins=self.__s, range=[[0, self.__s]] * 2)
 			grid = np.zeros((self.__s, self.__s))
-
+	def getCoords(self):
+		return self.__coords.copy()
 	def write(self):
 
 		f = open(self.__outfile, 'w')
