@@ -26,7 +26,7 @@ class arcadePopulation:
 
 
 		pathotypesList = sorted(global_parameters['pathotypes'])
-		self.__gP = np.array(interspecific_parameters['genotype_probability'][:len(pathotypesList)])
+		self.__gP = np.array(interspecific_parameters['genotype_probability'][:len(pathotypesList)+1])
 		self.__patho = pathotypesList
 		self.__loc   = dict()
 
@@ -61,6 +61,7 @@ class arcadePopulation:
 		genotypes = np.zeros((len(pathotypesList) + 1, len(pathotypesList)))
 		for i in range(len(pathotypesList)):
 			genotypes[i,i:] = 1
+
 		self.__genotypes = genotypes
 
 		if parametersDict['metaparameters']['placement'] == 'regular_model' :
@@ -139,6 +140,7 @@ class arcadePopulation:
 		population = np.zeros(total_size, dtype=fields)
 		population['index'] = np.arange(size_x*size_y)
 		self.randomGenotyping(populationList=population)
+		print(population)
 		return population
 
 	@staticmethod
@@ -186,8 +188,13 @@ class arcadePopulation:
 				possible_hosts = np.where(self.__P['G'][:,pathoLoc] == 1)[0]
 			except IndexError:
 				possible_hosts = np.where(self.__P['G'][:] == 1)[0]
-			seedValue = np.random.choice(possible_hosts, number)
-			self.__x[seedValue, pathoLoc] = 1.0
+			try:
+				seedValue = np.random.choice(possible_hosts, number)
+				print("patho = {0}, seed = {1}".format(patho, seedValue))
+				self.__x[seedValue, pathoLoc] = 1.0
+			except ValueError:
+				return
+
 
 	def getPathotypes(self):
 		"""
