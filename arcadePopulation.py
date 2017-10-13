@@ -140,7 +140,6 @@ class arcadePopulation:
 		population = np.zeros(total_size, dtype=fields)
 		population['index'] = np.arange(size_x*size_y)
 		self.randomGenotyping(populationList=population)
-		print(population)
 		return population
 
 	@staticmethod
