@@ -6,7 +6,7 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
-
+import sys
 
 class arcadePopulation:
 
@@ -93,6 +93,7 @@ class arcadePopulation:
 						('I', 'b1')]
 		self.__P = self.setPopulationList(size_x, size_y, commonFields)
 
+		print(self.__P['G'])
 		self.__P['rx'] = xx_coords
 		self.__P['ry'] = yy_coords
 		self.__P['A'][:] = True
@@ -124,7 +125,14 @@ class arcadePopulation:
 			self.__gP /= np.sum(self.__gP)
 			#raise UserWarning("genotypes of the host were not properly defined")
 		S = self.__sx*self.__sy
-		randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
+		indexes = np.arange(S)
+		randomGenotypes = np.zeros(S, dtype='int8')
+		indexes = np.random.permutation(indexes)
+		split_vector  = (self.__gP[:-1] * S).astype(int)
+		split_indexes = np.split(indexes, split_vector)
+		for i in range(len(split_indexes)) :
+			randomGenotypes[split_indexes[i]] = i
+		#randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
 		self.__genotypeList = randomGenotypes
 		try:
 			populationList['G'] = self.__genotypes[randomGenotypes, :]
@@ -281,9 +289,14 @@ class arcadePopulation:
 		# This is necessary to avoid double or triple infections
 
 		controlInfective = np.sum(self.__y, axis=1)
-
-		self.__d += self.__x >= 1.0
-		self.__y +=  ((self.__d == self.__dpi).T * (controlInfective < 2).T * self.__P['G'].T).T
+		try :
+			self.__d += (self.__x >= 1.0) * self.__P['G']
+		except ValueError :
+			self.__d += (self.__x >= 1.0) * self.__P['G'].reshape((self.__P['G'].size, 1))
+		try:
+			self.__y +=  ((self.__d == self.__dpi) * (controlInfective < 2))
+		except ValueError :
+			self.__y += ((self.__d == self.__dpi) * (controlInfective < 2).reshape((controlInfective.size, 1)))
 		self.__y =  (self.__P['A'] * self.__y.T).T
 
 	def updateExposition(self, I):
