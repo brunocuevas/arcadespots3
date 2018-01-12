@@ -6,7 +6,6 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 import scipy.stats as stats
-import sys
 
 class arcadePopulation:
 
@@ -112,6 +111,10 @@ class arcadePopulation:
 		self.__mortality = mortalityFunctions[parametersDict['metaparameters']['mortality']]()
 		self.__mortality = self.__mortality.astype(int)
 
+		try :
+			self.__limit_coinfection = parametersDict['global_parameters']['coinfection']
+		except KeyError:
+			self.__limit_coinfection = 2
 
 		print("population set")
 
@@ -294,9 +297,11 @@ class arcadePopulation:
 		except ValueError :
 			self.__d += (self.__x >= 1.0) * self.__P['G'].reshape((self.__P['G'].size, 1))
 		try:
-			self.__y +=  ((self.__d == self.__dpi) * (controlInfective < 2))
+			self.__y +=  ((self.__d == self.__dpi) * (controlInfective < self.__limit_coinfection))
 		except ValueError :
-			self.__y += ((self.__d == self.__dpi) * (controlInfective < 2).reshape((controlInfective.size, 1)))
+			self.__y += (
+				(self.__d == self.__dpi) * (controlInfective < self.__limit_coinfection).reshape((controlInfective.size, 1))
+			)
 		self.__y =  (self.__P['A'] * self.__y.T).T
 
 	def updateExposition(self, I):
