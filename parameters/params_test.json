@@ -3,7 +3,7 @@
         "global_parameters": {
             "c": 1e-05,
             "crop_time": 180,
-            "crops": 1,
+            "crops": 3,
             "dpi": 7,
             "epsilon_alpha": 0.25,
             "epsilon_beta": 0.01,
@@ -12,8 +12,8 @@
             "pathotypes": [
                 "P0"
             ],
-            "size_x": 100,
-            "size_y": 100
+            "size_x": 50,
+            "size_y": 50
         },
         "interspecific_parameters": {
             "C": {
@@ -34,9 +34,8 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                0.20,
+                0.80
             ]
         },
         "metaparameters": {
@@ -51,7 +50,7 @@
                 4,
                 5
             ],
-            "simulations": 3,
+            "simulations": 1,
             "verbose": false
         },
         "specific_parameters": {

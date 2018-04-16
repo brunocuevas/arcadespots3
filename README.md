@@ -14,8 +14,9 @@ models are a reasonable approach that allow to study the main
 features of the pathogen-host system.
 
 arcadeSpots3 allows to perform agent based simulations where
-host and pathogen populations are genetically diverse, and so 
-it describes the effects of diversity in an epidemic.
+host and pathogen populations are genetically diverse, and it
+includes features as spatial location of individuals, virulence,
+long and short kernel spread terms, and seasonality.
 
 ## Requirements
 
@@ -48,14 +49,15 @@ run simulations using just
     python arcadeSpots3.py sample_parameters.json
     
 If more than one processor is available (for instance,
-let's consider three processors), then a parallel
+let's consider tweenty processors), then a parallel
 version of the program can be executed, using
 
-    mpirun -np 3 arcadeMPI.py sample_parameters.json
+    mpirun -np 20 arcadeMPI.py sample_parameters.json
     
 Both programs produce an output that can be analyzed in R,
 Python or Excel.
 
 ## FAQ
 
-brunocuevaszuviria@gmail.com
+Bruno Cuevas Zuviría - Centro de Biotecnología y Genómica de Plantas (UPM-INIA), Madrid, Spain
+bruno.czuviria@upm.es
