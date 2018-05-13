@@ -131,9 +131,9 @@ class arcadePopulation:
 		indexes = np.arange(S)
 		randomGenotypes = np.zeros(S, dtype='int8')
 		indexes = np.random.permutation(indexes)
-		split_vector  = (self.__gP[:-1] * S).astype(int)
+		split_vector  = (self.__gP * S).astype(int)
 		split_indexes = np.split(indexes, split_vector)
-		for i in range(len(split_indexes)) :
+		for i in range(len(split_indexes)-1) :
 			randomGenotypes[split_indexes[i]] = i
 		#randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
 		self.__genotypeList = randomGenotypes
