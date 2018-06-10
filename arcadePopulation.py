@@ -92,7 +92,7 @@ class arcadePopulation:
 						('I', 'b1')]
 		self.__P = self.setPopulationList(size_x, size_y, commonFields)
 
-		print(self.__P['G'])
+
 		self.__P['rx'] = xx_coords
 		self.__P['ry'] = yy_coords
 		self.__P['A'][:] = True
@@ -116,7 +116,6 @@ class arcadePopulation:
 		except KeyError:
 			self.__limit_coinfection = 2
 
-		print("population set")
 
 	# STATIC METHODS
 	## setPopulationList
@@ -132,10 +131,10 @@ class arcadePopulation:
 		randomGenotypes = np.zeros(S, dtype='int8')
 		indexes = np.random.permutation(indexes)
 		split_vector  = (self.__gP * S).astype(int)
+		split_vector  = np.cumsum(split_vector)
 		split_indexes = np.split(indexes, split_vector)
 		for i in range(len(split_indexes)-1) :
 			randomGenotypes[split_indexes[i]] = i
-		#randomGenotypes = np.random.choice(np.arange(len(self.__gP)), size=S, p=self.__gP)
 		self.__genotypeList = randomGenotypes
 		try:
 			populationList['G'] = self.__genotypes[randomGenotypes, :]
@@ -200,7 +199,6 @@ class arcadePopulation:
 				possible_hosts = np.where(self.__P['G'][:] == 1)[0]
 			try:
 				seedValue = np.random.choice(possible_hosts, number)
-				print("patho = {0}, seed = {1}".format(patho, seedValue))
 				self.__x[seedValue, pathoLoc] = 1.0
 			except ValueError:
 				return

@@ -44,7 +44,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL4_0",
             "placement": "regular_model",
             "seeds": [
@@ -170,7 +170,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL4_1",
             "placement": "regular_model",
             "seeds": [
@@ -296,7 +296,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL4_2",
             "placement": "regular_model",
             "seeds": [
@@ -422,7 +422,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL4_3",
             "placement": "regular_model",
             "seeds": [
@@ -548,7 +548,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL4_4",
             "placement": "regular_model",
             "seeds": [
@@ -674,7 +674,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL4_5",
             "placement": "regular_model",
             "seeds": [
@@ -800,7 +800,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL3_0",
             "placement": "regular_model",
             "seeds": [
@@ -926,7 +926,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL3_1",
             "placement": "regular_model",
             "seeds": [
@@ -1052,7 +1052,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL3_2",
             "placement": "regular_model",
             "seeds": [
@@ -1178,7 +1178,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL3_3",
             "placement": "regular_model",
             "seeds": [
@@ -1304,7 +1304,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL3_4",
             "placement": "regular_model",
             "seeds": [
@@ -1430,7 +1430,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_LpL3_5",
             "placement": "regular_model",
             "seeds": [
@@ -1556,7 +1556,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_L3L4_0",
             "placement": "regular_model",
             "seeds": [
@@ -1682,7 +1682,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_L3L4_1",
             "placement": "regular_model",
             "seeds": [
@@ -1808,7 +1808,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_L3L4_2",
             "placement": "regular_model",
             "seeds": [
@@ -1934,7 +1934,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_L3L4_3",
             "placement": "regular_model",
             "seeds": [
@@ -2060,7 +2060,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_L3L4_4",
             "placement": "regular_model",
             "seeds": [
@@ -2186,7 +2186,7 @@
         },
         "metaparameters": {
             "map": false,
-            "mortality": "sanity_model",
+            "mortality": "lognormal_model",
             "outfile": "res_C_L3L4_5",
             "placement": "regular_model",
             "seeds": [

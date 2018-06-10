@@ -8,7 +8,7 @@ import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+import time
 
 # NOTE : This is an script. Not the real object that will be used later
 sns.set_style('whitegrid')
@@ -78,12 +78,8 @@ def parameters2JSON (dict2store, name):
 	f.close()
 
 class arcadeSimulator:
-	#k_stochastic = 0.1
-	#k_differential = 1.25
-	#e_stochastic = 0.25
-	#e_differential = 1e-2
-	#prob_constant = 1e-5
-	def __init__(self, parameter_dictionary, sim=0):
+	def __init__(self, parameter_dictionary, sim=0, verbose = True):
+		self.__verbose = verbose
 		self.__sim = sim
 		try :
 			seed = parameter_dictionary['metaparameters']['seeds'][sim]
@@ -117,7 +113,11 @@ class arcadeSimulator:
 		for patho in global_parameters['pathotypes']:
 			self.__population.setSeed(patho=patho)
 
+	def __log(self, message):
 
+		if self.__verbose :
+			ltime = time.localtime()
+			print("[arcadeSpots3] %s %02d:%02d:%02d" % (message, ltime.tm_hour, ltime.tm_min, ltime.tm_sec))
 	def __setStatistics(self):
 		statistics = dict()
 		for patho in self.__parameter_dictionary['global_parameters']['pathotypes'] :
@@ -192,13 +192,16 @@ class arcadeSimulator:
 		self.__setStatistics()
 		self.__buildMatrix()
 		S_precalc = np.zeros(self.__sx * self.__sy)
+		self.__log("starting simulation. refresh = %d" % refresh)
 		for crop in range(self.__numberCrops):
 			for i in range(self.__cropTime):
+				self.__log("simulation day %d cycle %d" % (i, crop))
 				self.__population.updateAlive()
 				self.__population.primaryInfection()
 				if i % refresh == 0:
 					S_precalc = self.__S.dot(self.__population.getTranmission())
-				self.__population.updateExposition(self.__I.dot(self.__population.getTranmission()))
+				tmp_transmission = self.__population.getTranmission()
+				self.__population.updateExposition(self.__I.dot(tmp_transmission))
 				self.__population.stochasticSecondaryInfections(S_precalc, method='tau_leap')
 				self.__population.updateInfective()
 				self.__population.updateInoculum()
@@ -213,6 +216,7 @@ class arcadeSimulator:
 						name = './%s/spatial_map_sim%s_patho%s_crop%d_time%d.png'
 						name = name % (folder, self.__sim, patho, crop, i)
 						self.__population.spatialMap(patho, time=i, crop=crop, filename=name)
+			self.__log("next crop")
 			self.__population.nextCrop()
 			for j in range(365 - self.__cropTime):
 				self.__population.updateInoculum()
@@ -247,12 +251,12 @@ class arcadeSimulator:
 			filename = './%s/timeSeriesStatistics_%s.csv' % (folderName, patho)
 			if os.path.exists(filename):
 				f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'a+')
-				f.write(statistics.to_csv(sep=",", index=False, float_format='%8.4f',
+				f.write(statistics.to_csv(sep=",", index=False, float_format='%12.4f',
 										  header=False))
 			else:
 				f = open('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho), 'w')
 				f.write(statistics.to_csv(sep=",", index=False, header=True,
-										  float_format='%8.4f'))
+										  float_format='%12.4f'))
 			f.close()
 
 
@@ -266,22 +270,15 @@ def arcadeOutput(params, population):
 	"""
 	import pandas as pd
 	import json
-	print("processing output")
-	print("\tsetting an excel time series file for users that are not familiar with Data Analysis")
 	folderName = params['metaparameters']['outfile']
 	excel = pd.ExcelWriter(folderName + '/timeSeries.xlsx')
 	for patho in params['global_parameters']['pathotypes'] :
 		temporal_table = pd.read_csv('./%s/timeSeriesStatistics_%s.csv' % (folderName, patho))
-		print("\t\t%s" % patho)
 		temporal_table.to_excel(excel_writer=excel, sheet_name=patho, index=False)
 	excel.save()
-	print("\tfinished!")
-	print("\tprinting parameters")
 	f = open('./%s/simulation_parameters.json' % folderName, 'w')
 	f.write(json.dumps(params, indent=4, sort_keys=True))
 	f.close()
-	print("\tfinished!")
-	print("\twriting coordinates of each of the hosts")
 	coord_x, coord_y = population.getCoordinates()
 	genotypes        = population.getGenotypes()
 	coordinates_dataframe = pd.DataFrame.from_items([
@@ -294,7 +291,6 @@ def arcadeOutput(params, population):
 		index=False,
 		sep=","
 	))
-	print("\tfinished!")
 
 
 

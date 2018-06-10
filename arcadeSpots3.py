@@ -38,7 +38,7 @@ for params in params_batch :
 		printReport(params)
 	aaa = None
 	for i in range(params['metaparameters']['simulations']):
-		aaa = aS.arcadeSimulator(params, sim=i)
+		aaa = aS.arcadeSimulator(params, sim=i, verbose=False)
 		aaa.simulate()
 		aaa.saveReport()
 	aS.arcadeOutput(params, aaa.getPopulation())
