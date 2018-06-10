@@ -36,9 +36,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -161,9 +162,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -286,9 +288,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -411,9 +414,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -536,9 +540,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -661,9 +666,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -786,9 +792,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -911,9 +918,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
@@ -1036,9 +1044,10 @@
                 }
             },
             "genotype_probability": [
-                0.5,
-                0.3,
-                0.2
+                1.0,
+                0.0,
+                0.0,
+                0.0
             ]
         },
         "metaparameters": {
