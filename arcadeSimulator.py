@@ -78,7 +78,7 @@ def parameters2JSON (dict2store, name):
 	f.close()
 
 class arcadeSimulator:
-	def __init__(self, parameter_dictionary, sim=0, verbose = True):
+	def __init__(self, parameter_dictionary, sim=0, verbose = False):
 		self.__verbose = verbose
 		self.__sim = sim
 		try :
