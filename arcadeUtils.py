@@ -42,3 +42,17 @@ class writer :
 	def write(self):
 		import os
 		os.makedirs(self.__folder_name)
+
+
+def save_statistics(filename, statistics, sim=0):
+
+	with open(filename, 'w') as f:
+
+		f.write('crop, time, exposition, infective, alive, inoculm, sim\n')
+		for line in statistics:
+			f.write(
+				'{:4d}, {:4d}, {:12.4e}, {:12.4e}, {:12.4e}, {:12.4e}, {:4d}\n'.format(
+					line['crop'], line['time'], line['exposition'], line['infective'],
+					line['alive'], line['inoculum'], sim
+				)
+			)

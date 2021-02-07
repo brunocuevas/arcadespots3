@@ -1,12 +1,10 @@
-#!/home/charizard/anaconda3/bin/ipython3
-
 import json
 import arcadeSimulator as aS
 import sys
 
 
-def parseArgumentsFile(fileName):
-	f = open(fileName)
+def parse_arguments_file(file_name):
+	f = open(file_name)
 	json_structure = json.load(f)
 	terms = ['global_parameters', 'specific_parameters', 'interspecific_parameters', 'metaparameters']
 	for batch in json_structure:
@@ -14,7 +12,8 @@ def parseArgumentsFile(fileName):
 			raise IOError("parameters were not correctly specified. global, specific and interspecific")
 	return json_structure
 
-def printReport(parameters):
+
+def print_report(parameters):
 	print("_" * 25)
 	print("\tarcadeSpots3, by Bruno Cuevas")
 	print("_" * 25)
@@ -25,21 +24,21 @@ def printReport(parameters):
 	print("\tPlacement model = {0}".format(parameters['metaparameters']['placement']))
 	print("\tCrops = {0}".format(parameters['global_parameters']['crops']))
 
-parameters_file = None
-try :
-	parameters_file = sys.argv[1]
-except IndexError:
-	print("missing parameters file")
-	quit()
-params_batch = parseArgumentsFile(parameters_file)
 
-for params in params_batch :
-	if params['metaparameters']['verbose'] :
-		printReport(params)
-	aaa = None
-	for i in range(params['metaparameters']['simulations']):
-		aaa = aS.arcadeSimulator(params, sim=i, verbose=False)
-		aaa.simulate()
-		aaa.saveReport()
-	aS.arcadeOutput(params, aaa.getPopulation())
+if __name__ == '__main__':
+	parameters_file = None
+	try:
+		parameters_file = sys.argv[1]
+	except IndexError:
+		print("missing parameters file")
+		quit()
+	params_batch = parse_arguments_file(parameters_file)
 
+	for params in params_batch:
+		if params['metaparameters']['verbose']:
+			print_report(params)
+		aaa = None
+		for i in range(params['metaparameters']['simulations']):
+			aaa = aS.ArcadeSimulator(params, sim=i, verbose=True)
+			aaa.simulate()
+			aaa.save_report()

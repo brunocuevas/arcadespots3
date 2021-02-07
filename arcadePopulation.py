@@ -1,165 +1,147 @@
-# arcadePopulation
 import numpy as np
 import pandas as pd
-import matplotlib as mpl
-mpl.use('Agg')
-import matplotlib.pyplot as plt
-import seaborn as sns
 import scipy.stats as stats
 
-class arcadePopulation:
 
-	def __init__(self, parametersDict):
+class ArcadePopulation:
 
+	def __init__(self, parameters_dict):
 
-		primaryInoc = list()
+		primary_inoculum = list()
 		k_omega = list()
 		sigma = list()
 		mu = list()
 
-		global_parameters   = parametersDict['global_parameters']
-		specific_parameters = parametersDict['specific_parameters']
-		interspecific_parameters = parametersDict['interspecific_parameters']
-		verbose = parametersDict['metaparameters']['verbose']
+		global_parameters = parameters_dict['global_parameters']
+		specific_parameters = parameters_dict['specific_parameters']
+		interspecific_parameters = parameters_dict['interspecific_parameters']
+		verbose = parameters_dict['metaparameters']['verbose']
 
-
-
-		pathotypesList = sorted(global_parameters['pathotypes'])
-		self.__gP = np.array(interspecific_parameters['genotype_probability'][:len(pathotypesList)+1])
-		self.__patho = pathotypesList
-		self.__loc   = dict()
+		pathotypes_list = sorted(global_parameters['pathotypes'])
+		self.genotype_probability = np.array(interspecific_parameters['genotype_probability'][:len(pathotypes_list) + 1])
+		self.pathotypes = pathotypes_list
+		self.loc = dict()
 
 		i = 0
 
-		for item in pathotypesList:
+		for item in pathotypes_list:
 
-			primaryInoc.append(specific_parameters['omega'][item])
+			primary_inoculum.append(specific_parameters['omega'][item])
 			k_omega.append(specific_parameters['k_omega'][item])
 			sigma.append(specific_parameters['sigma'][item])
 			mu.append(specific_parameters['mu'][item])
-			self.__loc[item] = i
+			self.loc[item] = i
 			i += 1
 
+		self.primary_inoculum_release = np.array(primary_inoculum)
+		self.primary_inoculum_decay = np.array(k_omega)
+		self.virulence_variance = np.array(sigma)
+		self.virulence_mean = np.array(mu)
+		self.dpi = parameters_dict['global_parameters']['dpi']
 
-		self.__omega   = np.array(primaryInoc)
-		self.__k_omega = np.array(k_omega)
-		self.__sigma = np.array(sigma)
-		self.__mu = np.array(mu)
-		self.__dpi = parametersDict['global_parameters']['dpi']
+		titre = np.zeros((len(pathotypes_list), len(pathotypes_list)))
+		for patho1_index in range(len(pathotypes_list)):
+			for patho2_index in range(len(pathotypes_list)):
+				patho1 = pathotypes_list[patho1_index]
+				patho2 = pathotypes_list[patho2_index]
+				titre[patho1_index, patho2_index] = interspecific_parameters['C'][patho1][patho2]
+		self.titre = titre
 
-
-		C = np.zeros((len(pathotypesList), len(pathotypesList)))
-		for patho1_index in range(len(pathotypesList)) :
-			for patho2_index in range(len(pathotypesList)) :
-				patho1 = pathotypesList[patho1_index]
-				patho2 = pathotypesList[patho2_index]
-				C[patho1_index, patho2_index] = interspecific_parameters['C'][patho1][patho2]
-		self.__C    = C
-
-
-		genotypes = np.zeros((len(pathotypesList) + 1, len(pathotypesList)))
-		for i in range(len(pathotypesList)):
-			genotypes[i,i:] = 1
+		genotypes = np.zeros((len(pathotypes_list) + 1, len(pathotypes_list)))
+		for i in range(len(pathotypes_list)):
+			genotypes[i, i:] = 1
 
 		self.__genotypes = genotypes
 
-		if parametersDict['metaparameters']['placement'] == 'regular_model' :
+		if parameters_dict['metaparameters']['placement'] == 'regular_model':
 			size_x = global_parameters['size_x']
 			size_y = global_parameters['size_y']
-			self.__sx = size_x
-			self.__sy = size_y
+			self.x = size_x
+			self.y = size_y
 			size = size_x * size_y
-			xx_coords, yy_coords = self.__setGridValues(size_x, size_y)
+			xx_coords, yy_coords = self.set_grid_values(size_x, size_y)
 		else:
-			placement_file = parametersDict['metaparameters']['placement']
-			xx_coords, yy_coords = self.__setGridValuesFromFile(placement_file)
+			placement_file = parameters_dict['metaparameters']['placement']
+			xx_coords, yy_coords = self.set_grid_values_from_file(placement_file)
 			size_x = xx_coords.size
 			size_y = 1
-			size   = xx_coords.size
-			self.__sx = size_x
-			self.__sy = size_y
+			size = xx_coords.size
+			self.x = size_x
+			self.y = size_y
 
-		if verbose :
+		if verbose:
 			print("arcadePopulation instance defined")
-			print("setting a population of %d hosts" %(int(size_x*size_y)))
+			print("setting a population of %d hosts" % (int(size_x*size_y)))
 
 		self.__genotypeList = None
-		commonFields = [('index', 'uint32'),
-						('rx', 'float32'),
-						('ry', 'float32'),
-						('A', 'b1'),
-						('G', 'int8', len(pathotypesList)	),
-						('I', 'b1')]
-		self.__P = self.setPopulationList(size_x, size_y, commonFields)
+		common_fields = [
+			('index', 'uint32'), ('rx', 'float32'), ('ry', 'float32'),
+			('A', 'b1'), ('G', 'int8', len(pathotypes_list)),
+			('I', 'b1')
+		]
+		self.hosts = self.set_population_list(size_x, size_y, common_fields)
+		self.hosts['rx'] = xx_coords
+		self.hosts['ry'] = yy_coords
+		self.hosts['A'][:] = True
 
-
-		self.__P['rx'] = xx_coords
-		self.__P['ry'] = yy_coords
-		self.__P['A'][:] = True
-
-		if verbose : print("common attributes set")
-		mortalityFunctions = dict(
-			linear_model   = self.__linearMortalityModel,
-			gaussian_model = self.__gaussianMortalityModel,
-			lognormal_model = self.__logNormalMortalityModel,
-			sanity_model   = self.__sanityModel
+		mortality_functions = dict(
+			linear_model=self.linear_mortality_model,
+			gaussian_model=self.gaussian_mortality_model,
+			lognormal_model=self.lognormal_mortality_model,
+			sanity_model=self.sanity_model
 		)
-		self.__x = np.zeros((size, len(pathotypesList)))
-		self.__y = np.zeros((size, len(pathotypesList)))
-		self.__d = np.zeros((size, len(pathotypesList)))
-		self.__w = np.zeros((size, len(pathotypesList)))
-		self.__mortality = mortalityFunctions[parametersDict['metaparameters']['mortality']]()
-		self.__mortality = self.__mortality.astype(int)
+		self.exposition = np.zeros((size, len(pathotypes_list)))
+		self.infectious = np.zeros((size, len(pathotypes_list)))
+		self.days_post_infection = np.zeros((size, len(pathotypes_list)))
+		self.primary_inoculum = np.zeros((size, len(pathotypes_list)))
+		self.life_span = mortality_functions[parameters_dict['metaparameters']['mortality']]()
+		self.life_span = self.life_span.astype(int)
 
-		try :
-			self.__limit_coinfection = parametersDict['global_parameters']['coinfection']
+		try:
+			self.__limit_coinfection = parameters_dict['global_parameters']['coinfection']
 		except KeyError:
 			self.__limit_coinfection = 2
 
-
 	# STATIC METHODS
-	## setPopulationList
-	## setGridValues
-	## createAttributeList
+	# setPopulationList
+	# setGridValues
+	# createAttributeList
 
-	def randomGenotyping(self, populationList):
-		if np.sum(self.__gP) < 1 :
-			self.__gP /= np.sum(self.__gP)
-			#raise UserWarning("genotypes of the host were not properly defined")
-		S = self.__sx*self.__sy
-		indexes = np.arange(S)
-		randomGenotypes = np.zeros(S, dtype='int8')
+	def random_genotyping(self, population_list):
+		if np.sum(self.genotype_probability) < 1:
+			self.genotype_probability /= np.sum(self.genotype_probability)
+			# raise UserWarning("genotypes of the host were not properly defined")
+		size = self.x * self.y
+		indexes = np.arange(size)
+		random_genotypes = np.zeros(size, dtype='int8')
 		indexes = np.random.permutation(indexes)
-		split_vector  = (self.__gP * S).astype(int)
-		split_vector  = np.cumsum(split_vector)
+		split_vector = (self.genotype_probability * size).astype(int)
+		split_vector = np.cumsum(split_vector)
 		split_indexes = np.split(indexes, split_vector)
-		for i in range(len(split_indexes)-1) :
-			randomGenotypes[split_indexes[i]] = i
-		self.__genotypeList = randomGenotypes
+		for i in range(len(split_indexes)-1):
+			random_genotypes[split_indexes[i]] = i
+		self.__genotypeList = random_genotypes
 		try:
-			populationList['G'] = self.__genotypes[randomGenotypes, :]
+			population_list['G'] = self.__genotypes[random_genotypes, :]
 		except ValueError:
-			temp = self.__genotypes[randomGenotypes, :]
-			populationList['G'] = temp.reshape(temp.size)
+			temp = self.__genotypes[random_genotypes, :]
+			population_list['G'] = temp.reshape(temp.size)
 
-
-
-
-	def setPopulationList(self, size_x, size_y, fields):
+	def set_population_list(self, size_x, size_y, fields):
 		total_size = size_y * size_x
 		population = np.zeros(total_size, dtype=fields)
 		population['index'] = np.arange(size_x*size_y)
-		self.randomGenotyping(populationList=population)
+		self.random_genotyping(population_list=population)
 		return population
 
 	@staticmethod
-	def __setGridValuesFromFile(filename):
+	def set_grid_values_from_file(filename):
 
 		coords = pd.read_csv(filename)
 		return coords['x'].values, coords['y'].values
 
 	@staticmethod
-	def __setGridValues(size_x, size_y, asimetric_y = 2.0, separation_x = 0.5):
+	def set_grid_values(size_x, size_y, asimetric_y=2.0, separation_x=0.5):
 		x_coordinates = np.arange(size_x, dtype='float32')
 		y_coordinates = np.arange(size_y, dtype='float32')
 		x_coordinates *= separation_x
@@ -170,13 +152,13 @@ class arcadePopulation:
 		return xx.reshape(size_x*size_y), yy.reshape(size_x*size_y)
 
 	@staticmethod
-	def __createAttributeList(listAttributes, numpyType='float32'):
+	def create_attribute_list(list_attributes, dtype='float32'):
 		attributes = list()
-		for item in listAttributes:
-			attributes.append((item, numpyType))
+		for item in list_attributes:
+			attributes.append((item, dtype))
 		return attributes
 
-	def setSeed(self, patho, method = 'random', number = 1):
+	def set_seed(self, patho, method ='random', number=1):
 		"""
 		arcadeSpots3 - arcadePopulation - setSeed()
 		:param method:
@@ -185,26 +167,25 @@ class arcadePopulation:
 		:return:
 
 		It sets the exposition value of a given position to 1.0,
-		 setting the beginning of an epidemic. It must be specified
-		 for each pathotype of the epidemic
+		setting the beginning of an epidemic. It must be specified
+		for each pathotype of the epidemic
 		"""
 		try:
-			pathoLoc = self.__loc[patho]
+			patho_loc = self.loc[patho]
 		except KeyError:
 			raise KeyError("There is no {0} pathotype specified".format(patho))
 		if method == 'random' :
 			try:
-				possible_hosts = np.where(self.__P['G'][:,pathoLoc] == 1)[0]
+				possible_hosts = np.where(self.hosts['G'][:, patho_loc] == 1)[0]
 			except IndexError:
-				possible_hosts = np.where(self.__P['G'][:] == 1)[0]
+				possible_hosts = np.where(self.hosts['G'][:] == 1)[0]
 			try:
-				seedValue = np.random.choice(possible_hosts, number)
-				self.__x[seedValue, pathoLoc] = 1.0
+				seed_value = np.random.choice(possible_hosts, number)
+				self.exposition[seed_value, patho_loc] = 1.0
 			except ValueError:
 				return
 
-
-	def getPathotypes(self):
+	def get_pathotypes(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getPathotypes()
 		:return:
@@ -212,18 +193,18 @@ class arcadePopulation:
 		It returns a list with the pathototypes that are included
 		within the population.
 		"""
-		return self.__patho
+		return self.pathotypes
 
-	def getCoordinates(self):
+	def get_coordinates(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getCoordinates()
 		:return: numpy array, numpy array
 
-		 It returns two arrays (x,y) with the coordinates of each host
+		It returns two arrays (x,y) with the coordinates of each host
 		"""
-		return np.copy(self.__P['rx']), np.copy(self.__P['ry'])
+		return np.copy(self.hosts['rx']), np.copy(self.hosts['ry'])
 
-	def getGenotypes(self):
+	def get_genotypes(self):
 		"""
 
 		:return:
@@ -233,53 +214,52 @@ class arcadePopulation:
 		except AttributeError:
 			raise IOError("There was some issue dealing with the genotypes")
 
-	def getShape(self):
-		return self.__sx, self.__sy
+	def get_shape(self):
+		return self.x, self.y
 
-	def getAlive(self):
+	def get_alive(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getAlive()
 		:return: numpy array
 
 		It returns an array with the alive state of the hosts
 		"""
-		return self.__P['A']
+		return self.hosts['A']
 
-	def getExposition(self):
+	def get_exposition(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getExposition()
 		:return: numpy array
 
 		It returns an array with the exposition states of the hosts
 		"""
-		return self.__x
+		return self.exposition
 
-	def getInfective(self):
+	def get_infective(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getInfective()
 		:return: numpy array
 
 		It returns an array with the infective states of the hosts
 		"""
-		return self.__y
-	#
-	# In development
-	def getTranmission(self):
+		return self.infectious
 
-		transmission = self.__y.dot(self.__C.T)
+	def get_transmision(self):
+
+		transmission = self.infectious.dot(self.titre.T)
 		transmission[transmission < 0] = 0.0
 		return transmission
 
-	def getDays(self):
+	def get_days(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getDays()
 		:return: numpy array
 
-		 It returns an array with the exposition states of the hosts
+		It returns an array with the exposition states of the hosts
 		"""
-		return self.__d
+		return self.days_post_infection
 
-	def updateInfective(self):
+	def update_infective(self):
 		"""
 		arcadeSpots3 - arcadePopulation - getDays()
 		:return:
@@ -289,42 +269,37 @@ class arcadePopulation:
 		"""
 		# This is necessary to avoid double or triple infections
 
-		controlInfective = np.sum(self.__y, axis=1)
-		try :
-			self.__d += (self.__x >= 1.0) * self.__P['G']
-		except ValueError :
-			self.__d += (self.__x >= 1.0) * self.__P['G'].reshape((self.__P['G'].size, 1))
+		control_infective = np.sum(self.infectious, axis=1)
 		try:
-			self.__y +=  ((self.__d == self.__dpi) * (controlInfective < self.__limit_coinfection))
-		except ValueError :
-			self.__y += (
-				(self.__d == self.__dpi) * (controlInfective < self.__limit_coinfection).reshape((controlInfective.size, 1))
+			self.days_post_infection += (self.exposition >= 1.0) * self.hosts['G']
+		except ValueError:
+			self.days_post_infection += (self.exposition >= 1.0) * self.hosts['G'].reshape((self.hosts['G'].size, 1))
+		try:
+			self.infectious += ((self.days_post_infection == self.dpi) * (control_infective < self.__limit_coinfection))
+		except ValueError:
+			self.infectious += (
+				(self.days_post_infection == self.dpi) * (control_infective < self.__limit_coinfection).reshape(
+					(control_infective.size, 1)
+				)
 			)
-		self.__y =  (self.__P['A'] * self.__y.T).T
+		self.infectious = (self.hosts['A'] * self.infectious.T).T
 
-	def updateExposition(self, I):
+	def update_exposition(self, exposition_delta):
 		"""
 		arcadeSpots3 - arcadePopulation - updateExposition()
-		:param I: numpy array
+		:param exposition_delta: numpy array
 		:return:
 
 		Once provided a vector that specifies the contacts between infective hosts and
 		other hosts, it updates the exposition value by multiplying the contact by
 		the rate of transmission of each pathotype.
 		"""
-
-		#self.__x += (self.__P['A'] *
-		#			 (self.__beta * I).T).T.reshape((self.__sx*self.__sy, len(self.__patho)))
-
-		self.__x += self.__P['A'].reshape((self.__P['A'].size,1)) * I
+		self.exposition += self.hosts['A'].reshape((self.hosts['A'].size, 1)) * exposition_delta
 		# sSIP : secondary Stochastic Infection Probability
 		# sSIE : secondary Stochastic Infection Event
-		#sSIP = (self.__P['A']*S.T).T
-		#sSIE = sSIP > np.random.rand(sSIP.shape[0], sSIP.shape[1])
-		#self.__x[sSIE == True]  += 1.0
-		self.__x[self.__x > 1.0] = 1.0
+		self.exposition = np.clip(self.exposition, a_max=1.0, a_min=0)
 
-	def stochasticSecondaryInfections(self, S, method = 'tau_leap'):
+	def stochastic_secondary_infections(self, S, method='tau_leap'):
 		"""
 		arcadeSpots3 - arcadePopulation - stochasticSecondaryInfections()
 		:param S:
@@ -332,45 +307,44 @@ class arcadePopulation:
 		:return:
 		"""
 		t = 0.0
-		if method == 'gillespie' :
-			while t < 1.0 :
-				a0 =  np.sum(S, axis = 0)
-				if np.all(a0 == 0) :
+		if method == 'gillespie':
+			while t < 1.0:
+				a0 = np.sum(S, axis=0)
+				if np.all(a0 == 0):
 					break
 				tau_reactions = (1/a0) * np.log(1/np.random.rand(1))
 				tau = np.min(tau_reactions)
 				reaction = np.argmin(tau_reactions)
-				t +=  tau
-				au = S / np.sum(S, axis = 0)
-				k  = np.random.choice(np.arange(len(au[:,reaction])),
-									  1, replace=False, p=au[:, reaction])
+				t += tau
+				au = S / np.sum(S, axis=0)
+				k = np.random.choice(np.arange(len(au[:, reaction])), 1, replace=False, p=au[:, reaction])
 
-				self.__x[k] = 1.0
-		elif method == 'tau_leap' :
+				self.exposition[k] = 1.0
+		elif method == 'tau_leap':
 			for patho in range(S.shape[1]) :
-				events = self.__tau_leap_sSI(S[:, patho], 1.0)
-				self.__x[events, patho] = 1.0
+				events = self.tau_leap_ssi(S[:, patho], 1.0)
+				self.exposition[events, patho] = 1.0
 
 	@staticmethod
-	def __tau_leap_sSI(probabilityVector, time_step):
+	def tau_leap_ssi(probability_vector, time_step):
 		"""
 
-		:param probabilityVector:
+		:param probability_vector:
 		:param time_step:
 		:return:
 		"""
-		if len(probabilityVector.shape) == 1 :
-			oA = np.sum(probabilityVector)
-			if oA == 0.0 :
+		if len(probability_vector.shape) == 1:
+			oA = np.sum(probability_vector)
+			if oA == 0.0:
 				return np.array([], dtype='int32')
-			events             = np.arange(probabilityVector.size)
-			n                  = np.random.poisson(oA*time_step)
-			chosen_events      = np.random.choice(events, n, replace = False,
-												  p = probabilityVector/oA)
+			events = np.arange(probability_vector.size)
+			n = np.random.poisson(oA*time_step)
+			chosen_events = np.random.choice(events, n, replace=False, p=probability_vector / oA)
 			return chosen_events
 		else:
 			raise ValueError("probability Vector must be unidimensional")
-	def updateAlive(self):
+
+	def update_alive(self):
 		"""
 		arcadeSpots3 - arcadePopulation - updateAlive()
 		:return:
@@ -379,21 +353,21 @@ class arcadePopulation:
 		the values of the alive state
 		"""
 
-		ref_vals = np.array([self.__C[i,i] for i in range(len(self.__patho))])
-		ref_vals = ref_vals.reshape(1, len(self.__patho))
-		self.__w += (self.__d == self.__mortality)*(self.getTranmission() / ref_vals)*self.__omega
-		self.__P['A'][np.sum(self.__d >= self.__mortality, axis=1) >= 1.0] = False
+		ref_vals = np.array([self.titre[i, i] for i in range(len(self.pathotypes))])
+		ref_vals = ref_vals.reshape(1, len(self.pathotypes))
+		self.primary_inoculum += (self.days_post_infection == self.life_span) * (self.get_transmision() / ref_vals) * self.primary_inoculum_release
+		self.hosts['A'][np.sum(self.days_post_infection >= self.life_span, axis=1) >= 1.0] = False
 
-	def updateInoculum(self):
+	def update_inoculum(self):
 		"""
 		arcadeSpots3 - arcadePopulation - updateAlive()
 		:return:
 
 		Updates the primary inoculum upon degradation
 		"""
-		self.__w *= self.__k_omega
+		self.primary_inoculum *= self.primary_inoculum_decay
 
-	def primaryInfection(self):
+	def primary_infection(self):
 		"""
 		arcadeSpots3 - arcadePopulation - primaryInfection()
 		:return:
@@ -402,184 +376,101 @@ class arcadePopulation:
 		the concentration of primary inoculum in the soil.
 		"""
 		base_prob = 5.4e-4
-		randomValues = (np.random.rand(self.__sx*self.__sy, len(self.__patho)) < (self.__w/1000000)*base_prob)
-		primaryInfections = (self.__P['A'] * randomValues.T).T
-		self.__x         += primaryInfections
-		self.__x[self.__x > 1.0] = 1.0
+		random_values = (
+				np.random.rand(self.x * self.y, len(self.pathotypes)) < (self.primary_inoculum / 1000000) * base_prob)
+		primary_infections = (self.hosts['A'] * random_values.T).T
+		self.exposition += primary_infections
+		self.exposition[self.exposition > 1.0] = 1.0
 
-	def nextCrop(self):
+	def next_crop(self):
 		"""
 		arcadeSpots3 - arcadePopulation - nextCrop()
 		:return:
 
 		Resets all the values but the primary inoculum
 		"""
-		self.__w[:,:] += self.__omega * ((self.__P['A'] == True) * (self.__y == True).T).T
-		self.__x[:,:] = 0.0
-		self.__y[:,:] = False
-		self.__d[:,:] = 0
-		self.__P['A'][:] = True
+		self.primary_inoculum[:, :] += self.primary_inoculum_release * (
+				(self.hosts['A'] == True) * (self.infectious == True).T).T
+		self.exposition[:, :] = 0.0
+		self.infectious[:, :] = False
+		self.days_post_infection[:, :] = 0
+		self.hosts['A'][:] = True
 
-	def modifyPopulation(self, ind, parameter, value):
-		try :
-			self.__P[parameter]
+	def modify_population(self, ind, parameter, value):
+		try:
+			self.hosts[parameter]
 		except KeyError:
 			raise IOError("there is not such an attribute %s" % parameter)
-		try :
-			self.__P[parameter][ind]
+		try:
+			self.hosts[parameter][ind]
 		except IndexError:
 			raise IOError("there is not such an individual %d" % ind)
-		self.__P[parameter][ind] = value
+		self.hosts[parameter][ind] = value
 
-	def plotPopulation(self, patho, time=None, show=True):
+	def dump_spatial_data(self, filename, patho, time, crop):
+
 		try:
-			pathoLoc = self.__loc[patho]
+			patho_loc = self.loc[patho]
 		except KeyError:
 			raise KeyError("There is no such a {0} pathotype".format(patho))
-		exposition = self.__x[:,pathoLoc].reshape((self.__sx, self.__sy))
-		infective  = self.__y[:,pathoLoc].reshape((self.__sx, self.__sy))
-		alive      = self.__P['A'].reshape((self.__sx, self.__sy))
-		primaryInoc= self.__w[:,pathoLoc].reshape((self.__sx, self.__sy))
-		#plt.figure(figsize=(10,5))
-		plt.subplot(221)
-		sns.heatmap(exposition, cmap='viridis', xticklabels=False, yticklabels=False)
-		plt.title('Exposition')
-		plt.subplot(222)
-		sns.heatmap(infective, cmap='viridis', xticklabels=False, yticklabels=False)
-		plt.title('infective')
-		plt.subplot(223)
-		sns.heatmap(alive, cmap='viridis', xticklabels=False, yticklabels=False)
-		plt.title('alive')
-		plt.subplot(224)
-		sns.heatmap(primaryInoc, cmap='viridis', xticklabels=False, yticklabels=False)
-		plt.title('primary Inoculum')
-		if show:
-			plt.show()
-		else:
-			plt.savefig("patho_{0}_day_{1}.png".format(patho, time), dpi=300)
-			plt.close()
-	def spatialMap(self, patho, time, crop, show=False, filename = False):
-		try :
-			pathoLoc = self.__loc[patho]
-		except KeyError:
-			raise KeyError("There is no such a {0} pathotype".format(patho))
-		sns.set_style('darkgrid')
-		axis = [
-			self.__P['rx'].min() - 1,
-			self.__P['rx'].max() + 1,
-			self.__P['ry'].min() - 1,
-			self.__P['ry'].max() + 1
 
-		]
-		plt.suptitle('time = %d' % time)
-		##------------------------------------------------------------#
-		## exposition
-		##------------------------------------------------------------#
-		plt.subplot(221)
-		plt.title('exposition')
-		ax=plt.scatter(self.__P['rx'], self.__P['ry'], c=self.__x[:,pathoLoc],
-					cmap='viridis')
-		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
-		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
-		plt.colorbar(ax)
-		##------------------------------------------------------------#
-		## exposition
-		##------------------------------------------------------------#
-		plt.subplot(222)
-		plt.title('infective')
-		ax =plt.hexbin(self.__P['rx'][self.__y[:,pathoLoc] == True],
-						self.__P['ry'][self.__y[:, pathoLoc] == True],
-						cmap='viridis', extent=axis, gridsize=20)
-		plt.colorbar(ax)
-		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
-		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
-		##------------------------------------------------------------#
-		## alive
-		##------------------------------------------------------------#
-		plt.subplot(223)
-		plt.title('mortality')
-		ax = plt.hexbin(self.__P['rx'][self.__P['A'] == False],
-						 self.__P['ry'][self.__P['A']== False],
-						 cmap='viridis', extent=axis, gridsize=20)
-		plt.colorbar(ax)
-		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
-		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
-		##------------------------------------------------------------#
-		## primary inoc
-		##------------------------------------------------------------#
-		plt.subplot(224)
-		plt.title('primary inoculum')
-		ax = plt.scatter(self.__P['rx'],self.__P['ry'], c=np.log10(self.__w[:,pathoLoc]),
-					cmap='viridis')
-		plt.ylim(self.__P['ry'].min() - 1, self.__P['ry'].max() + 1)
-		plt.xlim(self.__P['rx'].min() - 1, self.__P['rx'].max() + 1)
-		plt.colorbar(ax)
-		if filename :
-			plt.savefig(filename, dpi=300)
-		else:
-			plt.savefig('space_map_patho_%s_crop_%d_time_%d.png' % (patho, crop, time), dpi=300)
-		if show:
-			plt.show()
-		else:
-			plt.close()
-	def plotInfectiveAreas(self, patho1, patho2):
-		sns.set_style('white')
-		infectiveAreas = np.zeros((self.__sx, self.__sy,3))
-		patho1_loc = self.__loc[patho1]
-		patho2_loc = self.__loc[patho2]
-		infectiveAreas[:, :, 0] = self.__y[:, patho1_loc].reshape((self.__sx, self.__sy))
-		infectiveAreas[:, :, 1] = self.__y[:, patho2_loc].reshape((self.__sx, self.__sy))
-		plt.imshow(infectiveAreas, interpolation=None)
-		plt.grid(b=None)
-		plt.show()
+		rx = self.hosts['rx']
+		ry = self.hosts['ry']
+		exposition = self.infectious[:, patho_loc]
+		alive = self.hosts['A']
+		inoculum = self.primary_inoculum[:, patho_loc]
 
-	def getStatistics(self, patho):
+		filename = filename + '_{:03d}_{:03d}.spatial.csv'.format(crop, time)
+		with open(filename, 'w') as f:
+			for i in range(len(rx)):
+				f.write('{:4.3f} {:4.3f} {:4.3f} {:4.3f} {:4.3f}\n'.format(
+					rx[i], ry[i], exposition[i], alive[i], inoculum[i]
+				))
+
+	def get_statistics(self, patho):
 		statistics = np.zeros(1, dtype=[
 			('exposition', 'float32'),
 			('infective',  'float32'),
 			('alive',      'float32'),
 			('inoculum',   'float32')
 		])
-		total_pop = self.__sy * self.__sx
+		total_pop = self.y * self.x
 		try:
-			pathoLoc = self.__loc[patho]
+			patho_loc = self.loc[patho]
 		except KeyError:
 			raise KeyError("There is no such a {0} pathotype".format(patho))
-		statistics['exposition'] = np.sum(self.__x[:,pathoLoc]) / total_pop
-		statistics['infective']  = np.sum(self.__y[:,pathoLoc]) / total_pop
-		statistics['alive']      = np.sum(self.__P['A']) / total_pop
-		statistics['inoculum']   = np.sum(self.__w[:,pathoLoc]) / (total_pop*1000)
+		statistics['exposition'] = np.sum(self.exposition[:, patho_loc]) / total_pop
+		statistics['infective'] = np.sum(self.infectious[:, patho_loc]) / total_pop
+		statistics['alive'] = np.sum(self.hosts['A']) / total_pop
+		statistics['inoculum'] = np.sum(self.primary_inoculum[:, patho_loc]) / (total_pop * 1000)
 		return statistics
 
+	def get_index(self, k):
+		i = int(k / self.x)
+		j = k - i*self.x
+		return i, j
 
-
-	def __getIndex(self, k):
-		i = int(k/self.__sx)
-		j = k - i*self.__sx
-		return i,j
-
-	def __linearMortalityModel(self):
-		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
-		tau = np.log(x) / (-self.__sigma)
+	def linear_mortality_model(self):
+		x = np.random.rand(self.x * self.y, len(self.pathotypes))
+		tau = np.log(x) / (-self.virulence_variance)
 		tau = np.round(tau, 0)
-		tau += self.__mu
-		tau += self.__dpi
+		tau += self.virulence_mean
+		tau += self.dpi
 		return tau
 
-	def __gaussianMortalityModel(self):
+	def gaussian_mortality_model(self):
 
-		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+		x = np.random.rand(self.x * self.y, len(self.pathotypes))
 		u = stats.norm.ppf(x)
-		return u*self.__sigma + self.__mu + self.__dpi
+		return u * self.virulence_variance + self.virulence_mean + self.dpi
 
-
-	def __logNormalMortalityModel(self):
-		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+	def lognormal_mortality_model(self):
+		x = np.random.rand(self.x * self.y, len(self.pathotypes))
 		u = stats.norm.ppf(x)
-		return np.exp(u * self.__sigma + self.__mu) + self.__dpi
+		return np.exp(u * self.virulence_variance + self.virulence_mean) + self.dpi
 
-	def __sanityModel(self):
-		hazard = self.__mu * np.exp(self.__sigma)
-		x = np.random.rand(self.__sx * self.__sy, len(self.__patho))
+	def sanity_model(self):
+		hazard = self.virulence_mean * np.exp(self.virulence_variance)
+		x = np.random.rand(self.x * self.y, len(self.pathotypes))
 		u = np.log(x)*(1 / -hazard)
-		return u.astype(int) + self.__dpi
+		return u.astype(int) + self.dpi

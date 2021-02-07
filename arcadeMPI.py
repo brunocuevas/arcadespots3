@@ -44,9 +44,9 @@ for batch in arguments:
 
 	tasks = comm.scatter(tasks, root=0)
 	for sim in tasks :
-		aaa = aS.arcadeSimulator(batch, sim=sim)
+		aaa = aS.ArcadeSimulator(batch, sim=sim)
 		aaa.simulate()
-		aaa.saveReport()
+		aaa.save_report()
 
 
 
