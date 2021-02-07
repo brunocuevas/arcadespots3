@@ -46,9 +46,8 @@ class writer :
 
 def save_statistics(filename, statistics, sim=0):
 
-	with open(filename, 'w') as f:
+	with open(filename, 'a+') as f:
 
-		f.write('crop, time, exposition, infective, alive, inoculm, sim\n')
 		for line in statistics:
 			f.write(
 				'{:4d}, {:4d}, {:12.4e}, {:12.4e}, {:12.4e}, {:12.4e}, {:4d}\n'.format(
