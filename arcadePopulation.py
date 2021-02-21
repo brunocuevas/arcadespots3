@@ -77,7 +77,7 @@ class ArcadePopulation:
 		common_fields = [
 			('index', 'uint32'), ('rx', 'float32'), ('ry', 'float32'),
 			('A', 'b1'), ('G', 'int8', len(pathotypes_list)),
-			('I', 'b1')
+			('I', 'b1'), ('NI', 'int8')
 		]
 		self.hosts = self.set_population_list(size_x, size_y, common_fields)
 		self.hosts['rx'] = xx_coords
@@ -92,15 +92,16 @@ class ArcadePopulation:
 		)
 		self.exposition = np.zeros((size, len(pathotypes_list)))
 		self.infectious = np.zeros((size, len(pathotypes_list)))
+		self.infectious_acumulative = np.zeros((size, len(pathotypes_list)))
 		self.days_post_infection = np.zeros((size, len(pathotypes_list)))
 		self.primary_inoculum = np.zeros((size, len(pathotypes_list)))
 		self.life_span = mortality_functions[parameters_dict['metaparameters']['mortality']]()
 		self.life_span = self.life_span.astype(int)
 
 		try:
-			self.__limit_coinfection = parameters_dict['global_parameters']['coinfection']
+			self.coinfection_limit = parameters_dict['global_parameters']['coinfection']
 		except KeyError:
-			self.__limit_coinfection = 2
+			self.coinfection_limit = 2
 
 	# STATIC METHODS
 	# setPopulationList
@@ -275,14 +276,19 @@ class ArcadePopulation:
 		except ValueError:
 			self.days_post_infection += (self.exposition >= 1.0) * self.hosts['G'].reshape((self.hosts['G'].size, 1))
 		try:
-			self.infectious += ((self.days_post_infection == self.dpi) * (control_infective < self.__limit_coinfection))
+			delta_infectious = ((self.days_post_infection == self.dpi) * (control_infective < self.coinfection_limit))
+			self.infectious += delta_infectious
+			self.infectious_acumulative += delta_infectious
 		except ValueError:
-			self.infectious += (
-				(self.days_post_infection == self.dpi) * (control_infective < self.__limit_coinfection).reshape(
+			delta_infectious = (
+				(self.days_post_infection == self.dpi) * (control_infective < self.coinfection_limit).reshape(
 					(control_infective.size, 1)
 				)
 			)
+			self.infectious += delta_infectious
+			self.infectious_acumulative += delta_infectious
 		self.infectious = (self.hosts['A'] * self.infectious.T).T
+		self.hosts['NI'][:] = np.sum(self.infectious, axis=1)
 
 	def update_exposition(self, exposition_delta):
 		"""
@@ -393,6 +399,7 @@ class ArcadePopulation:
 				(self.hosts['A'] == True) * (self.infectious == True).T).T
 		self.exposition[:, :] = 0.0
 		self.infectious[:, :] = False
+		self.infectious_acumulative[:, :] = False
 		self.days_post_infection[:, :] = 0
 		self.hosts['A'][:] = True
 
@@ -431,8 +438,10 @@ class ArcadePopulation:
 		statistics = np.zeros(1, dtype=[
 			('exposition', 'float32'),
 			('infective',  'float32'),
+			('infective_ac', 'float32'),
 			('alive',      'float32'),
-			('inoculum',   'float32')
+			('inoculum',   'float32'),
+			('coinfected', 'float32')
 		])
 		total_pop = self.y * self.x
 		try:
@@ -443,6 +452,8 @@ class ArcadePopulation:
 		statistics['infective'] = np.sum(self.infectious[:, patho_loc]) / total_pop
 		statistics['alive'] = np.sum(self.hosts['A']) / total_pop
 		statistics['inoculum'] = np.sum(self.primary_inoculum[:, patho_loc]) / (total_pop * 1000)
+		statistics['coinfected'] = np.sum(self.hosts['NI'] > 1) / total_pop
+		statistics['infective_ac'] = np.sum(self.infectious_acumulative[:, patho_loc]) / total_pop
 		return statistics
 
 	def get_index(self, k):

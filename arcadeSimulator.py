@@ -120,8 +120,10 @@ class ArcadeSimulator:
 				('time', 'int64'),
 				('exposition', 'float32'),
 				('infective', 'float32'),
+				('infective_ac', 'float32'),
 				('alive', 'float32'),
-				('inoculum', 'float32')
+				('inoculum', 'float32'),
+				('coinfected', 'float32')
 			])
 		self.stats = statistics
 
@@ -134,16 +136,20 @@ class ArcadeSimulator:
 					('time', 'int64'),
 					('exposition', 'float32'),
 					('infective', 'float32'),
+					('infective_ac', 'float32'),
 					('alive', 'float32'),
-					('inoculum', 'float32')
+					('inoculum', 'float32'),
+					('coinfected', 'float32')
 				]
 			)
 			st_plus[0]['crop'] = np.array(crop)
 			st_plus[0]['time'] = np.array(time)
 			st_plus[0]['exposition'] = st['exposition']
 			st_plus[0]['infective'] = st['infective']
+			st_plus[0]['infective_ac'] = st['infective_ac']
 			st_plus[0]['alive'] = st['alive']
 			st_plus[0]['inoculum'] = st['inoculum']
+			st_plus[0]['coinfected'] = st['coinfected']
 			self.stats[patho] = np.concatenate((self.stats[patho], st_plus))
 
 	def build_matrix(self):

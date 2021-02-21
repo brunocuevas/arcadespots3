@@ -2,7 +2,7 @@
     {
         "global_parameters": {
             "c": 1e-05,
-            "coinfection": 1,
+            "coinfection": 2,
             "crop_time": 180,
             "crops": 5,
             "dpi": 7,
@@ -15,8 +15,8 @@
                 "P12",
                 "P123"
             ],
-            "size_x": 100,
-            "size_y": 100
+            "size_x": 10,
+            "size_y": 10
         },
         "interspecific_parameters": {
             "C": {
@@ -148,7 +148,7 @@
                 98,
                 99
             ],
-            "simulations": 100,
+            "simulations": 1,
             "verbose": false
         },
         "specific_parameters": {

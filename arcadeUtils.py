@@ -50,8 +50,8 @@ def save_statistics(filename, statistics, sim=0):
 
 		for line in statistics:
 			f.write(
-				'{:4d}, {:4d}, {:12.4e}, {:12.4e}, {:12.4e}, {:12.4e}, {:4d}\n'.format(
-					line['crop'], line['time'], line['exposition'], line['infective'],
-					line['alive'], line['inoculum'], sim
+				'{:4d}, {:4d}, {:12.4e}, {:12.4e}, {:12.4e}, {:12.4e}, {:12.4e}, {:12.4e}, {:4d}\n'.format(
+					line['crop'], line['time'], line['exposition'], line['infective'], line['infective_ac'],
+					line['alive'], line['inoculum'], line['coinfected'], sim
 				)
 			)
