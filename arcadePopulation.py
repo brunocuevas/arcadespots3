@@ -434,6 +434,22 @@ class ArcadePopulation:
 					rx[i], ry[i], exposition[i], alive[i], inoculum[i]
 				))
 
+	def dump_coinfection_data(self, filename, time, crop):
+
+		coinf = []
+		for i, p in enumerate(self.pathotypes):
+			for j, q in enumerate(self.pathotypes):
+				if i >= j:
+					continue
+				else:
+					inf_i = self.infectious[:, i]
+					inf_j = self.infectious[:, j]
+					coinf.append(float((inf_i * inf_j).sum() / (self.y * self.x)))
+		with open(filename, 'a') as f:
+			f.write('{:d} {:d} '.format(crop, time))
+			f.write(''.join(['{:8.4f} '.format(x) for x in coinf]))
+			f.write('\n')
+
 	def get_statistics(self, patho):
 		statistics = np.zeros(1, dtype=[
 			('exposition', 'float32'),

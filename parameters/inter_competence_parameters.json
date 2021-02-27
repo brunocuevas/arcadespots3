@@ -2,7 +2,7 @@
     {
         "global_parameters": {
             "c": 1e-05,
-            "coinfection": 2,
+            "coinfection": 1,
             "crop_time": 180,
             "crops": 5,
             "dpi": 7,
@@ -15,8 +15,8 @@
                 "P12",
                 "P123"
             ],
-            "size_x": 10,
-            "size_y": 10
+            "size_x": 100,
+            "size_y": 100
         },
         "interspecific_parameters": {
             "C": {
@@ -46,6 +46,7 @@
             "mortality": "lognormal_model",
             "outfile": "only_inter",
             "placement": "regular_model",
+            "overlap": false,
             "seeds": [
                 0,
                 1,

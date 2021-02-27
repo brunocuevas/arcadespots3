@@ -1561,16 +1561,16 @@
                 }
             },
             "genotype_probability": [
-                0,
-                0,
                 1.0,
+                0,
+                0,
                 0.0
             ]
         },
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "res_C_L3L4_0",
+            "outfile": "res_C_LpL4_0",
             "placement": "regular_model",
             "seeds": [
                 0,
@@ -1688,16 +1688,16 @@
                 }
             },
             "genotype_probability": [
-                0,
-                0,
                 0.8,
+                0,
+                0,
                 0.2
             ]
         },
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "res_C_L3L4_1",
+            "outfile": "res_C_LpL4_1",
             "placement": "regular_model",
             "seeds": [
                 0,
@@ -1815,16 +1815,16 @@
                 }
             },
             "genotype_probability": [
-                0,
-                0,
                 0.6,
+                0,
+                0,
                 0.4
             ]
         },
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "res_C_L3L4_2",
+            "outfile": "res_C_LpL4_2",
             "placement": "regular_model",
             "seeds": [
                 0,
@@ -1942,16 +1942,16 @@
                 }
             },
             "genotype_probability": [
-                0,
-                0,
                 0.3999999999999999,
+                0,
+                0,
                 0.6000000000000001
             ]
         },
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "res_C_L3L4_3",
+            "outfile": "res_C_LpL4_3",
             "placement": "regular_model",
             "seeds": [
                 0,
@@ -2069,16 +2069,16 @@
                 }
             },
             "genotype_probability": [
-                0,
-                0,
                 0.19999999999999996,
+                0,
+                0,
                 0.8
             ]
         },
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "res_C_L3L4_4",
+            "outfile": "res_C_LpL4_4",
             "placement": "regular_model",
             "seeds": [
                 0,
@@ -2196,16 +2196,16 @@
                 }
             },
             "genotype_probability": [
-                0,
-                0,
                 0.0,
+                0,
+                0,
                 1.0
             ]
         },
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "res_C_L3L4_5",
+            "outfile": "res_C_LpL4_5",
             "placement": "regular_model",
             "seeds": [
                 0,

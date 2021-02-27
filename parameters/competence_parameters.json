@@ -148,6 +148,7 @@
                 99
             ],
             "simulations": 100,
+            "overlap": true,
             "verbose": false
         },
         "specific_parameters": {
