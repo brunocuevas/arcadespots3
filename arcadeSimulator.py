@@ -78,7 +78,6 @@ class ArcadeSimulator:
 		except IndexError:
 			seed = sim
 		verbose = parameter_dictionary['metaparameters']['verbose']
-		overlap = parameter_dictionary['metaparameters']['overlap']
 		self.__v = verbose
 		if verbose:
 			("\tworking with seed {0}".format(seed))
@@ -219,16 +218,17 @@ class ArcadeSimulator:
 							filename='./%s/%s' % (folder, patho), patho=patho,
 							time=i, crop=crop
 						)
-				if i % refresh == 0 and self.param_dict['metaparameters']['overlap']:
-					folder = self.param_dict['metaparameters']['outfile']
-					if os.path.exists(folder):
-						pass
-					else:
-						os.makedirs(folder)
-					self.population.dump_coinfection_data(
-						filename='./{:s}/coinfection.csv'.format(folder, ),
-						time=i, crop=crop
-					)
+				if 'overalp' in self.param_dict['metaparameters']:
+					if i % refresh == 0 and self.param_dict['metaparameters']['overlap']:
+						folder = self.param_dict['metaparameters']['outfile']
+						if os.path.exists(folder):
+							pass
+						else:
+							os.makedirs(folder)
+						self.population.dump_coinfection_data(
+							filename='./{:s}/coinfection.csv'.format(folder, ),
+							time=i, crop=crop
+						)
 			self.__log("next crop")
 			self.population.next_crop()
 			for j in range(365 - self.cropTime):

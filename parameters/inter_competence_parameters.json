@@ -4,7 +4,7 @@
             "c": 1e-05,
             "coinfection": 1,
             "crop_time": 180,
-            "crops": 5,
+            "crops": 15,
             "dpi": 7,
             "epsilon_alpha": 0.25,
             "epsilon_beta": 0.01,
@@ -44,7 +44,7 @@
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "only_inter",
+            "outfile": "het.nocoinf",
             "placement": "regular_model",
             "overlap": false,
             "seeds": [

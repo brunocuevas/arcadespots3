@@ -3,8 +3,9 @@
         "global_parameters": {
             "c": 1e-05,
             "crop_time": 180,
-            "crops": 5,
+            "crops": 15,
             "dpi": 7,
+            "coinfection": 2,
             "epsilon_alpha": 0.25,
             "epsilon_beta": 0.01,
             "k_alpha": 0.1,
@@ -43,7 +44,7 @@
         "metaparameters": {
             "map": false,
             "mortality": "lognormal_model",
-            "outfile": "free_P0",
+            "outfile": "het.coinf",
             "placement": "regular_model",
             "seeds": [
                 0,
