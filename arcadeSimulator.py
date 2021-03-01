@@ -218,7 +218,7 @@ class ArcadeSimulator:
 							filename='./%s/%s' % (folder, patho), patho=patho,
 							time=i, crop=crop
 						)
-				if 'overalp' in self.param_dict['metaparameters']:
+				if 'overlap' in self.param_dict['metaparameters']:
 					if i % refresh == 0 and self.param_dict['metaparameters']['overlap']:
 						folder = self.param_dict['metaparameters']['outfile']
 						if os.path.exists(folder):
