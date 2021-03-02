@@ -224,7 +224,7 @@ class ArcadeSimulator:
 						try:
 							os.makedirs(folder)
 						except FileExistsError:
-							continue
+							pass
 						self.population.dump_coinfection_data(
 							filename='./{:s}/coinfection.csv'.format(folder, ),
 							time=i, crop=crop
