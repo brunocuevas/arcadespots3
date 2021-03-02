@@ -221,10 +221,10 @@ class ArcadeSimulator:
 				if 'overlap' in self.param_dict['metaparameters']:
 					if i % refresh == 0 and self.param_dict['metaparameters']['overlap']:
 						folder = self.param_dict['metaparameters']['outfile']
-						if os.path.exists(folder):
-							pass
-						else:
+						try:
 							os.makedirs(folder)
+						except FileExistsError:
+							continue
 						self.population.dump_coinfection_data(
 							filename='./{:s}/coinfection.csv'.format(folder, ),
 							time=i, crop=crop
