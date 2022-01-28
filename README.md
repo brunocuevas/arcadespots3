@@ -31,15 +31,10 @@ your system administrator.
 ## Usage
 
 arcadeSpots3 requires specific parameters for each simulation,
-that must be stored in the form of a JSON dictionary. It is
-possible to obtain a sample of the parameters file using
+that must be stored in the form of a JSON dictionary. The parameters employed
+in the simulations of the published article are available at:
 
-    import arcadeSimulator
-    import json
-    f = open('sample_parameters.json', 'w')
-    f.write(json.dumps(arcadeSimulator.parametersDict,
-        indent = 4, sort_keys = True))
-    f.close()
+	parameters/_2022/
  
 ![arcadeSpots3_parameters](./doc/arcadeSpots3_inputParameters.png)
 
